@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Pencil, Trash2, Eye, EyeOff, Package, AlertTriangle, X, Check } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, Package, AlertTriangle, X, Check, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface Props {
@@ -11,7 +11,8 @@ interface Props {
 
 const emptyForm = {
   name_ar: '', name_en: '', description_ar: '', description_en: '',
-  price: '', stock_quantity: '', category_id: '', sku: '', is_active: true,
+  price: '', stock_quantity: '', category_id: '', sku: '', image_url: '',
+  is_active: true, is_featured: false,
 };
 
 export default function AdminProductsClient({ initialProducts, categories }: Props) {
@@ -21,6 +22,8 @@ export default function AdminProductsClient({ initialProducts, categories }: Pro
   const [form, setForm] = useState<typeof emptyForm>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const featuredCount = products.filter((p) => p.is_featured && p.is_active).length;
 
   function openAdd() {
     setEditing(null);
@@ -39,7 +42,9 @@ export default function AdminProductsClient({ initialProducts, categories }: Pro
       stock_quantity: String(product.stock_quantity),
       category_id: product.category_id || '',
       sku: product.sku || '',
+      image_url: product.image_url || '',
       is_active: product.is_active,
+      is_featured: product.is_featured || false,
     });
     setModalOpen(true);
   }
@@ -47,6 +52,11 @@ export default function AdminProductsClient({ initialProducts, categories }: Pro
   async function handleSave() {
     if (!form.name_ar || !form.name_en || !form.price) {
       toast.error('يرجى ملء الحقول المطلوبة');
+      return;
+    }
+    // Check featured limit
+    if (form.is_featured && !editing?.is_featured && featuredCount >= 6) {
+      toast.error('الحد الأقصى للمنتجات المميزة هو 6 منتجات');
       return;
     }
     setSaving(true);
@@ -60,18 +70,15 @@ export default function AdminProductsClient({ initialProducts, categories }: Pro
         stock_quantity: parseInt(form.stock_quantity) || 0,
         category_id: form.category_id || null,
         sku: form.sku || null,
+        image_url: form.image_url || null,
         is_active: form.is_active,
+        is_featured: form.is_featured,
       };
       const url = editing ? `/api/products/${editing.id}` : '/api/products';
       const method = editing ? 'PATCH' : 'POST';
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-
       if (editing) {
         setProducts((prev) => prev.map((p) => p.id === editing.id ? { ...p, ...data } : p));
         toast.success('تم تحديث المنتج');
@@ -99,12 +106,16 @@ export default function AdminProductsClient({ initialProducts, categories }: Pro
     }
   }
 
-  async function toggleActive(product: any) {
+  async function toggleField(product: any, field: 'is_active' | 'is_featured') {
+    if (field === 'is_featured' && !product.is_featured && featuredCount >= 6) {
+      toast.error('الحد الأقصى للمنتجات المميزة هو 6 منتجات');
+      return;
+    }
     try {
       const res = await fetch(`/api/products/${product.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_active: !product.is_active }),
+        body: JSON.stringify({ [field]: !product[field] }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error();
@@ -114,10 +125,32 @@ export default function AdminProductsClient({ initialProducts, categories }: Pro
     }
   }
 
+  async function toggleStock(product: any) {
+    const newQty = product.stock_quantity > 0 ? 0 : 1;
+    try {
+      const res = await fetch(`/api/products/${product.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stock_quantity: newQty }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error();
+      setProducts((prev) => prev.map((p) => p.id === product.id ? { ...p, ...data } : p));
+      toast.success(newQty > 0 ? 'تم تعيين المنتج كمتوفر' : 'تم تعيين المنتج كغير متوفر');
+    } catch {
+      toast.error('حدث خطأ');
+    }
+  }
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">المنتجات</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">المنتجات</h1>
+          <p className="text-sm text-gray-400 mt-0.5">
+            المميزة: {featuredCount}/6
+          </p>
+        </div>
         <button onClick={openAdd} className="btn-primary flex items-center gap-2">
           <Plus size={18} />
           إضافة منتج
@@ -130,49 +163,83 @@ export default function AdminProductsClient({ initialProducts, categories }: Pro
             <thead>
               <tr className="bg-gray-50 text-gray-500 text-xs">
                 <th className="px-4 py-3 text-start">المنتج</th>
-                <th className="px-4 py-3 text-start">رقم القطعة</th>
                 <th className="px-4 py-3 text-start">السعر</th>
                 <th className="px-4 py-3 text-start">المخزون</th>
-                <th className="px-4 py-3 text-start">الحالة</th>
+                <th className="px-4 py-3 text-start">متوفر</th>
+                <th className="px-4 py-3 text-start">ظاهر</th>
+                <th className="px-4 py-3 text-start">مميز ⭐</th>
                 <th className="px-4 py-3 text-start">إجراءات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {products.map((product) => (
-                <tr key={product.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-gray-800">{product.name_ar}</p>
-                    <p className="text-xs text-gray-400">{product.name_en}</p>
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs text-gray-500">{product.sku || '—'}</td>
-                  <td className="px-4 py-3 font-bold text-brand-600">{product.price.toLocaleString()} ج.م</td>
-                  <td className="px-4 py-3">
-                    <span className={`font-medium ${product.stock_quantity === 0 ? 'text-red-600' : product.stock_quantity < 5 ? 'text-yellow-600' : 'text-green-600'}`}>
-                      {product.stock_quantity}
-                      {product.stock_quantity < 5 && product.stock_quantity > 0 && (
-                        <AlertTriangle size={12} className="inline ms-1 text-yellow-500" />
-                      )}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <button onClick={() => toggleActive(product)} className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium ${product.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                      {product.is_active ? <><Eye size={12} /> ظاهر</> : <><EyeOff size={12} /> مخفي</>}
-                    </button>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => openEdit(product)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg">
-                        <Pencil size={15} />
+              {products.map((product) => {
+                const inStock = product.stock_quantity > 0;
+                return (
+                  <tr key={product.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        {product.image_url ? (
+                          <img src={product.image_url} alt="" className="w-10 h-10 object-contain rounded-lg border border-gray-100" />
+                        ) : (
+                          <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <Package size={16} className="text-gray-400" />
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-medium text-gray-800">{product.name_ar}</p>
+                          <p className="text-xs text-gray-400">{product.sku || '—'}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 font-bold text-brand-600">{product.price?.toLocaleString()} ج.م</td>
+                    <td className="px-4 py-3">
+                      <span className={`font-medium ${!inStock ? 'text-red-600' : product.stock_quantity < 5 ? 'text-yellow-600' : 'text-green-600'}`}>
+                        {product.stock_quantity}
+                        {product.stock_quantity < 5 && inStock && <AlertTriangle size={12} className="inline ms-1" />}
+                      </span>
+                    </td>
+                    {/* In-stock toggle */}
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => toggleStock(product)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${inStock ? 'bg-green-500' : 'bg-gray-300'}`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${inStock ? 'translate-x-6' : 'translate-x-1'}`} />
                       </button>
-                      <button onClick={() => setDeleteId(product.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg">
-                        <Trash2 size={15} />
+                    </td>
+                    {/* Visible toggle */}
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => toggleField(product, 'is_active')}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${product.is_active ? 'bg-blue-500' : 'bg-gray-300'}`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${product.is_active ? 'translate-x-6' : 'translate-x-1'}`} />
                       </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    {/* Featured toggle */}
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => toggleField(product, 'is_featured')}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${product.is_featured ? 'bg-yellow-400' : 'bg-gray-300'}`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${product.is_featured ? 'translate-x-6' : 'translate-x-1'}`} />
+                      </button>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => openEdit(product)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg">
+                          <Pencil size={15} />
+                        </button>
+                        <button onClick={() => setDeleteId(product.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg">
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
               {products.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-12 text-center text-gray-400">
+                <tr><td colSpan={7} className="px-4 py-12 text-center text-gray-400">
                   <Package size={32} className="mx-auto mb-2 opacity-30" />
                   لا توجد منتجات
                 </td></tr>
@@ -209,6 +276,22 @@ export default function AdminProductsClient({ initialProducts, categories }: Pro
                   )}
                 </div>
               ))}
+
+              {/* Image URL field */}
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">رابط صورة المنتج</label>
+                <input
+                  type="url"
+                  className="input-field"
+                  placeholder="https://example.com/image.jpg"
+                  value={form.image_url}
+                  onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+                />
+                {form.image_url && (
+                  <img src={form.image_url} alt="preview" className="mt-2 h-20 object-contain rounded-lg border border-gray-200" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                )}
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">الفئة</label>
                 <select className="input-field" value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}>
@@ -216,9 +299,19 @@ export default function AdminProductsClient({ initialProducts, categories }: Pro
                   {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name_ar}</option>)}
                 </select>
               </div>
-              <div className="flex items-center gap-3">
-                <input type="checkbox" id="is_active" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="w-4 h-4 accent-brand-600" />
-                <label htmlFor="is_active" className="text-sm font-medium text-gray-700">ظاهر للعملاء</label>
+
+              <div className="flex flex-col gap-3 pt-2">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="w-4 h-4 accent-brand-600" />
+                  <span className="text-sm font-medium text-gray-700">ظاهر للعملاء</span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input type="checkbox" checked={form.is_featured} onChange={(e) => setForm({ ...form, is_featured: e.target.checked })} className="w-4 h-4 accent-yellow-500" />
+                  <span className="text-sm font-medium text-gray-700 flex items-center gap-1">
+                    <Star size={14} className="text-yellow-500" /> منتج مميز (الصفحة الرئيسية)
+                    <span className="text-xs text-gray-400">({featuredCount}/6)</span>
+                  </span>
+                </label>
               </div>
             </div>
             <div className="p-5 pt-0 flex gap-3">
@@ -240,9 +333,7 @@ export default function AdminProductsClient({ initialProducts, categories }: Pro
             <p className="text-gray-500 text-sm mb-5">لا يمكن التراجع عن هذا الإجراء</p>
             <div className="flex gap-3">
               <button onClick={() => setDeleteId(null)} className="btn-secondary flex-1">إلغاء</button>
-              <button onClick={() => handleDelete(deleteId)} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2.5 rounded-lg transition-colors">
-                حذف
-              </button>
+              <button onClick={() => handleDelete(deleteId)} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2.5 rounded-lg transition-colors">حذف</button>
             </div>
           </div>
         </div>

@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingBag, Calendar, Settings, LogOut, Wrench, ExternalLink } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, Calendar, Settings, LogOut, Wrench, ExternalLink, Search } from 'lucide-react';
 
 const navItems = [
   { href: '/admin', label: 'الرئيسية', icon: LayoutDashboard, exact: true },
   { href: '/admin/products', label: 'المنتجات', icon: Package },
   { href: '/admin/orders', label: 'الطلبات', icon: ShoppingBag },
   { href: '/admin/appointments', label: 'المواعيد', icon: Calendar },
+  { href: '/admin/requests', label: 'طلبات المنتجات', icon: Search },
   { href: '/admin/settings', label: 'الإعدادات', icon: Settings },
 ];
 
@@ -22,12 +23,11 @@ export default function AdminSidebar() {
 
   async function handleLogout() {
     await fetch('/api/admin-auth', { method: 'DELETE' });
-    window.location.href = '/admin/login';
+    window.location.href = '/admin-login';
   }
 
   return (
     <aside className="w-60 bg-gray-900 text-white flex flex-col min-h-screen">
-      {/* Logo */}
       <div className="p-5 border-b border-gray-700">
         <div className="flex items-center gap-2">
           <div className="bg-brand-600 rounded-lg p-1.5">
@@ -40,7 +40,6 @@ export default function AdminSidebar() {
         </div>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 p-3">
         <div className="flex flex-col gap-1">
           {navItems.map(({ href, label, icon: Icon, exact }) => (
@@ -60,7 +59,6 @@ export default function AdminSidebar() {
         </div>
       </nav>
 
-      {/* Bottom */}
       <div className="p-3 border-t border-gray-700 flex flex-col gap-1">
         <a
           href="/ar"
