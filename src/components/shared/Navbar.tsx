@@ -16,8 +16,10 @@ export default function Navbar() {
   const otherLocale = isAr ? 'en' : 'ar';
 
   function switchLocale() {
-    const newPath = pathname.replace(`/${locale}`, `/${otherLocale}`);
-    router.push(newPath);
+    // Replace only the first segment (locale) in the path
+    const segments = pathname.split('/');
+    segments[1] = otherLocale;
+    router.push(segments.join('/'));
   }
 
   const links = [
@@ -50,7 +52,7 @@ export default function Navbar() {
               </span>
             </Link>
 
-            {/* Desktop nav links */}
+            {/* Desktop nav */}
             <div className="hidden md:flex items-center gap-6">
               {links.map((link) => (
                 <Link
@@ -63,7 +65,7 @@ export default function Navbar() {
               ))}
             </div>
 
-            {/* Right side: language + mobile menu */}
+            {/* Right side */}
             <div className="flex items-center gap-2">
               {/* Language toggle */}
               <button
@@ -74,7 +76,7 @@ export default function Navbar() {
                 {isAr ? 'EN' : 'عربي'}
               </button>
 
-              {/* Book appointment CTA — desktop only */}
+              {/* Book CTA */}
               <Link
                 href={`/${locale}/booking`}
                 className="hidden md:inline-flex items-center bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
