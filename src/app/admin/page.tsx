@@ -20,7 +20,7 @@ export default async function AdminDashboard() {
     supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
     supabase.from('appointments').select('*', { count: 'exact', head: true }).eq('preferred_date', today),
     supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(5),
-  ]);
+  ]) as any[];
 
   const statusColor: Record<string, string> = {
     pending: 'badge-pending',
