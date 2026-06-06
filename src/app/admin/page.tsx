@@ -1,5 +1,5 @@
-import { requireAdmin } from '@/lib/require-admin';
 import { createAdminClient } from '@/lib/supabase';
+import { requireAdmin } from '@/lib/require-admin';
 import { Package, ShoppingBag, Calendar, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
@@ -36,7 +36,6 @@ export default async function AdminDashboard() {
     <div className="p-6">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">لوحة التحكم</h1>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
           { label: 'إجمالي المنتجات', value: totalProducts || 0, icon: Package, color: 'bg-blue-50 text-blue-600', href: '/admin/products' },
@@ -54,7 +53,6 @@ export default async function AdminDashboard() {
         ))}
       </div>
 
-      {/* Recent orders */}
       <div className="card overflow-hidden">
         <div className="flex items-center justify-between p-5 border-b">
           <h2 className="font-bold text-gray-800">آخر الطلبات</h2>

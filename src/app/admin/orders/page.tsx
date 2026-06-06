@@ -1,5 +1,5 @@
-import { requireAdmin } from '@/lib/require-admin';
 import { createAdminClient } from '@/lib/supabase';
+import { requireAdmin } from '@/lib/require-admin';
 import AdminOrdersClient from '@/components/admin/AdminOrdersClient';
 
 export default async function AdminOrdersPage() {
@@ -9,6 +9,5 @@ export default async function AdminOrdersPage() {
     .from('orders')
     .select('*')
     .order('created_at', { ascending: false });
-
-  return <AdminOrdersClient initialOrders={orders || []} />;
+  return <AdminOrdersClient initialOrders={(orders || []) as any[]} />;
 }
