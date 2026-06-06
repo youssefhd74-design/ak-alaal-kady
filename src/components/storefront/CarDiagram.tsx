@@ -8,291 +8,315 @@ export default function CarDiagram({ serviceType }: { serviceType: ServiceType }
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 50);
+    const id = setInterval(() => setTick(t => t + 1), 40);
     return () => clearInterval(id);
   }, []);
 
   const engineGlow = serviceType === 'maintenance';
-  const faultGlow   = serviceType === 'malfunction';
+  const faultGlow = serviceType === 'malfunction';
+  const angle = tick * 4;
 
-  // Wheel spin angle
-  const wheelAngle = tick * 3;
+  const spoke = (cx: number, cy: number, r1: number, r2: number, deg: number) => {
+    const rad = (deg * Math.PI) / 180;
+    return (
+      <line
+        x1={cx + r1 * Math.cos(rad)} y1={cy + r1 * Math.sin(rad)}
+        x2={cx + r2 * Math.cos(rad)} y2={cy + r2 * Math.sin(rad)}
+        stroke="#ea580c" strokeWidth="2.5" strokeLinecap="round"
+      />
+    );
+  };
+
+  const Wheel = ({ cx, cy }: { cx: number; cy: number }) => (
+    <g>
+      {/* Outer tyre */}
+      <circle cx={cx} cy={cy} r="32" fill="#0a0a0a" stroke="#333" strokeWidth="2" />
+      {/* Tyre sidewall highlight */}
+      <circle cx={cx} cy={cy} r="32" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" strokeDasharray="12 8" />
+      {/* Rim */}
+      <circle cx={cx} cy={cy} r="22" fill="#111827" stroke="#ea580c" strokeWidth="1.5" />
+      {/* Spokes */}
+      <g transform={`rotate(${angle}, ${cx}, ${cy})`}>
+        {[0, 60, 120, 180, 240, 300].map(d => spoke(cx, cy, 6, 20, d))}
+      </g>
+      {/* Centre */}
+      <circle cx={cx} cy={cy} r="6" fill="#ea580c" />
+      <circle cx={cx} cy={cy} r="3" fill="white" opacity="0.5" />
+      {/* Brake disc hint */}
+      <circle cx={cx} cy={cy} r="14" fill="none" stroke="rgba(234,88,12,0.2)" strokeWidth="1" strokeDasharray="3 3" />
+    </g>
+  );
 
   return (
-    <div className="relative w-full flex flex-col items-center justify-center py-4 select-none">
-      <svg viewBox="0 0 600 240" className="w-full max-w-2xl">
+    <div className="w-full flex flex-col items-center justify-center py-6 select-none">
+      <svg viewBox="0 0 640 260" className="w-full max-w-2xl">
+        <defs>
+          <filter id="glow-orange">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+          <filter id="glow-red">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+          <filter id="glow-blue">
+            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+          <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#1e293b" />
+            <stop offset="100%" stopColor="#0f172a" />
+          </linearGradient>
+          <linearGradient id="roofGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#1a2744" />
+            <stop offset="100%" stopColor="#0f1a33" />
+          </linearGradient>
+          <linearGradient id="windshieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#1e3a5f" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#0a1628" stopOpacity="0.7" />
+          </linearGradient>
+        </defs>
 
-        {/* ── GROUND ── */}
-        <ellipse cx="300" cy="228" rx="240" ry="7" fill="rgba(255,255,255,0.04)" />
-        <line x1="60" y1="228" x2="540" y2="228" stroke="rgba(234,88,12,0.15)" strokeWidth="1" />
+        {/* ── GROUND REFLECTION ── */}
+        <ellipse cx="320" cy="248" rx="260" ry="7" fill="rgba(234,88,12,0.08)" />
+        <line x1="50" y1="246" x2="590" y2="246" stroke="rgba(234,88,12,0.12)" strokeWidth="1" />
 
-        {/* ══════════════════════════════════════════
-            BODY — modern sedan silhouette
-        ══════════════════════════════════════════ */}
+        {/* ── BODY ── */}
+        {/* Rocker panel / lower body */}
+        <path d="M 100 188 Q 100 202 112 202 L 528 202 Q 540 202 540 188 L 540 175 L 100 175 Z"
+          fill="url(#bodyGrad)" stroke="rgba(234,88,12,0.3)" strokeWidth="1" />
 
-        {/* Lower body / sill */}
-        <path d="
-          M 85 175
-          L 85 195
-          Q 85 205 95 205
-          L 505 205
-          Q 515 205 515 195
-          L 515 175
-          Z
-        " fill="#1c1c2e" stroke="#2a2a3e" strokeWidth="1" />
+        {/* Main body */}
+        <path d="M 100 175 L 100 142 Q 100 135 108 132 L 168 126 Q 192 98 230 84 L 390 82 Q 432 82 458 104 L 512 128 Q 534 132 540 142 L 540 175 Z"
+          fill="url(#bodyGrad)" stroke="rgba(234,88,12,0.4)" strokeWidth="1.5" />
 
-        {/* Main body shell */}
-        <path d="
-          M 90 175
-          L 90 145
-          Q 90 138 98 135
-          L 155 130
-          Q 175 105 210 90
-          L 370 88
-          Q 415 88 445 108
-          L 490 130
-          Q 510 133 515 145
-          L 515 175
-          Z
-        " fill="#1e1e30" stroke="#2e2e42" strokeWidth="1.5" />
+        {/* ── ROOF / CABIN ── */}
+        <path d="M 175 126 Q 188 84 228 70 L 390 68 Q 428 68 452 90 L 472 126 Z"
+          fill="url(#roofGrad)" stroke="#ea580c" strokeWidth="1.5"
+          filter="url(#glow-orange)" opacity="0.9" />
 
-        {/* Roof — sleek low arch */}
-        <path d="
-          M 168 130
-          Q 178 88 210 76
-          L 368 74
-          Q 400 74 422 90
-          L 452 130
-          Z
-        " fill="#16162a" stroke="#2a2a3e" strokeWidth="1.5" />
+        {/* Roof edge highlight */}
+        <path d="M 195 126 Q 207 88 232 74 L 388 72 Q 422 72 444 92 L 460 126"
+          fill="none" stroke="rgba(234,88,12,0.25)" strokeWidth="1" />
 
-        {/* ── WINDOWS ── */}
-        {/* Windshield */}
-        <path d="
-          M 178 128
-          Q 188 92 212 80
-          L 258 78
-          L 258 128
-          Z
-        " fill="#0d1b3e" stroke="rgba(234,88,12,0.5)" strokeWidth="1" opacity="0.95" />
+        {/* ── WINDSHIELD ── */}
+        <path d="M 188 124 Q 200 88 232 74 L 275 72 L 275 124 Z"
+          fill="url(#windshieldGrad)" stroke="#38bdf8" strokeWidth="1.2"
+          filter="url(#glow-blue)" />
+        {/* Wiper */}
+        <line x1="208" y1="120" x2="265" y2="84"
+          stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" strokeLinecap="round" />
+        {/* Windshield reflection */}
+        <path d="M 200 118 Q 215 90 235 78" fill="none"
+          stroke="rgba(255,255,255,0.12)" strokeWidth="5" strokeLinecap="round" />
 
-        {/* Rear window */}
-        <path d="
-          M 272 78
-          L 366 78
-          Q 392 80 410 96
-          L 442 128
-          L 272 128
-          Z
-        " fill="#0d1b3e" stroke="rgba(234,88,12,0.5)" strokeWidth="1" opacity="0.95" />
+        {/* ── REAR WINDOW ── */}
+        <path d="M 288 72 L 390 70 Q 424 70 446 90 L 462 124 L 288 124 Z"
+          fill="url(#windshieldGrad)" stroke="#38bdf8" strokeWidth="1.2"
+          filter="url(#glow-blue)" />
+        {/* Rear window reflection */}
+        <path d="M 310 72 L 310 120" fill="none"
+          stroke="rgba(255,255,255,0.06)" strokeWidth="10" strokeLinecap="round" />
 
-        {/* B-pillar */}
-        <rect x="260" y="78" width="10" height="50" fill="#111" />
-
-        {/* Window reflections */}
-        <line x1="193" y1="120" x2="210" y2="86" stroke="rgba(255,255,255,0.06)" strokeWidth="6" strokeLinecap="round" />
-        <line x1="295" y1="82" x2="295" y2="126" stroke="rgba(255,255,255,0.04)" strokeWidth="8" strokeLinecap="round" />
+        {/* ── B-PILLAR ── */}
+        <rect x="276" y="70" width="10" height="54" fill="#0a0f1e" />
+        <line x1="281" y1="70" x2="281" y2="124"
+          stroke="rgba(234,88,12,0.2)" strokeWidth="1" />
 
         {/* ── DOOR LINES ── */}
-        <line x1="270" y1="128" x2="270" y2="200" stroke="#2a2a42" strokeWidth="1.5" />
-        {/* Door handles */}
-        <rect x="300" y="160" width="22" height="6" rx="3" fill="#2a2a3e" stroke="rgba(234,88,12,0.4)" strokeWidth="1" />
-        <rect x="180" y="160" width="22" height="6" rx="3" fill="#2a2a3e" stroke="rgba(234,88,12,0.4)" strokeWidth="1" />
+        <line x1="285" y1="124" x2="285" y2="200"
+          stroke="rgba(234,88,12,0.2)" strokeWidth="1.5" />
+        {/* Door handles — modern flush style */}
+        <rect x="312" y="155" width="26" height="7" rx="3.5"
+          fill="#1e293b" stroke="rgba(234,88,12,0.5)" strokeWidth="1" />
+        <rect x="190" y="155" width="26" height="7" rx="3.5"
+          fill="#1e293b" stroke="rgba(234,88,12,0.5)" strokeWidth="1" />
 
         {/* ── HOOD ── */}
-        <path d="
-          M 450 133
-          L 515 145
-          L 515 175
-          L 450 175
-          Z
-        " fill="#1a1a2c" stroke="#2a2a3e" strokeWidth="1" />
-        {/* Hood crease */}
-        <line x1="452" y1="138" x2="514" y2="150" stroke="rgba(234,88,12,0.15)" strokeWidth="1" />
+        <path d="M 458 106 L 512 130 L 540 142 L 540 175 L 458 175 Z"
+          fill="#131c2e" stroke="rgba(234,88,12,0.3)" strokeWidth="1.2" />
+        {/* Hood scoop / crease line */}
+        <path d="M 462 110 Q 500 125 536 148"
+          fill="none" stroke="rgba(234,88,12,0.15)" strokeWidth="1.5" />
+        <path d="M 468 116 Q 505 130 538 152"
+          fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="3" />
 
         {/* ── TRUNK ── */}
-        <path d="
-          M 90 145
-          L 90 175
-          L 150 175
-          L 155 130
-          Z
-        " fill="#1a1a2c" stroke="#2a2a3e" strokeWidth="1" />
+        <path d="M 100 142 L 100 175 L 162 175 L 168 126 Z"
+          fill="#131c2e" stroke="rgba(234,88,12,0.3)" strokeWidth="1.2" />
 
         {/* ── FRONT BUMPER ── */}
-        <path d="
-          M 510 190
-          L 540 190
-          Q 548 190 548 197
-          L 548 205
-          L 510 205
-          Z
-        " fill="#111122" stroke="#222233" strokeWidth="1" />
-        {/* Lower grill strip */}
-        <rect x="514" y="196" width="30" height="4" rx="2" fill="#ea580c" opacity="0.6" />
+        <path d="M 536 182 L 572 182 Q 582 182 582 192 L 582 202 L 536 202 Z"
+          fill="#0d1117" stroke="#1e293b" strokeWidth="1" />
+        {/* Grill slats */}
+        {[185, 190, 195].map((y, i) => (
+          <rect key={i} x="540" y={y} width="36" height="2.5" rx="1"
+            fill="rgba(234,88,12,0.4)" />
+        ))}
+        {/* Fog light */}
+        <rect x="541" y="198" width="12" height="3" rx="1.5"
+          fill={engineGlow || faultGlow ? '#fbbf24' : '#334155'}
+          style={{ transition: 'fill 0.3s' }} />
 
         {/* ── REAR BUMPER ── */}
-        <path d="
-          M 90 190
-          L 60 190
-          Q 52 190 52 197
-          L 52 205
-          L 90 205
-          Z
-        " fill="#111122" stroke="#222233" strokeWidth="1" />
+        <path d="M 100 182 L 64 182 Q 54 182 54 192 L 54 202 L 100 202 Z"
+          fill="#0d1117" stroke="#1e293b" strokeWidth="1" />
+        {/* Exhaust */}
+        <rect x="62" y="197" width="14" height="5" rx="2"
+          fill="#1e293b" stroke="#333" strokeWidth="1" />
+        <ellipse cx="76" cy="199.5" rx="2" ry="2.5" fill="#111" />
 
-        {/* ── FRONT LED HEADLIGHT ── */}
-        {/* Main housing */}
-        <path d="M 510 138 L 545 143 L 545 162 L 510 160 Z"
-          fill="#0a0a1a" stroke="#333" strokeWidth="1" />
-        {/* LED strip — daytime running */}
-        <path d="M 512 141 L 542 145"
-          stroke={engineGlow || faultGlow ? '#fbbf24' : '#334155'}
-          strokeWidth="3" strokeLinecap="round"
-          style={{ filter: engineGlow || faultGlow ? 'drop-shadow(0 0 4px #fbbf24)' : 'none', transition: 'all 0.4s' }}
-        />
-        {/* Low beam */}
-        <rect x="512" y="150" width="28" height="7" rx="2"
-          fill={engineGlow || faultGlow ? 'rgba(251,191,36,0.3)' : '#1e293b'}
-          style={{ transition: 'all 0.4s' }}
-        />
-        {/* Light beam */}
+        {/* ── FRONT HEADLIGHT — thin LED style ── */}
+        <path d="M 536 132 L 578 138 L 578 162 L 536 158 Z"
+          fill="#0a0e1a" stroke="#1e293b" strokeWidth="1" />
+        {/* DRL strip */}
+        <path d="M 538 135 L 576 140"
+          stroke={engineGlow || faultGlow ? '#fde68a' : '#1e3a5f'}
+          strokeWidth="4" strokeLinecap="round"
+          filter={engineGlow || faultGlow ? 'url(#glow-orange)' : ''}
+          style={{ transition: 'all 0.3s' }} />
+        {/* Main beam */}
+        <rect x="540" y="148" width="34" height="8" rx="2"
+          fill={engineGlow || faultGlow ? 'rgba(253,230,138,0.25)' : '#0f1c2e'}
+          style={{ transition: 'all 0.3s' }} />
+        {/* Beam rays */}
         {(engineGlow || faultGlow) && (
-          <path d="M 545 143 L 595 130 L 595 168 L 545 162 Z"
-            fill="rgba(251,191,36,0.06)" />
+          <>
+            <path d="M 578 138 L 625 125 L 625 170 L 578 162 Z"
+              fill="rgba(253,230,138,0.04)" />
+            <line x1="578" y1="140" x2="622" y2="130" stroke="rgba(253,230,138,0.15)" strokeWidth="1" />
+            <line x1="578" y1="150" x2="625" y2="148" stroke="rgba(253,230,138,0.15)" strokeWidth="1" />
+            <line x1="578" y1="158" x2="622" y2="165" stroke="rgba(253,230,138,0.15)" strokeWidth="1" />
+          </>
         )}
 
-        {/* ── REAR LED TAILLIGHT ── */}
-        <path d="M 55 138 L 90 133 L 90 162 L 55 158 Z"
-          fill="#0a0a1a" stroke="#333" strokeWidth="1" />
-        {/* LED strip */}
-        <path d="M 58 141 L 88 137"
-          stroke={faultGlow ? '#ef4444' : '#4a1010'}
-          strokeWidth="3" strokeLinecap="round"
-          style={{ filter: faultGlow ? 'drop-shadow(0 0 5px #ef4444)' : 'none', transition: 'all 0.4s' }}
-        />
-        <rect x="58" y="149" width="28" height="7" rx="2"
-          fill={faultGlow ? 'rgba(239,68,68,0.3)' : '#1a0808'}
-          style={{ transition: 'all 0.4s' }}
-        />
+        {/* ── REAR TAILLIGHT — LED bar ── */}
+        <path d="M 60 132 L 100 128 L 100 158 L 60 154 Z"
+          fill="#0a0e1a" stroke="#1e293b" strokeWidth="1" />
+        {/* LED bar */}
+        <path d="M 62 136 L 98 132"
+          stroke={faultGlow ? '#f87171' : '#4a0a0a'}
+          strokeWidth="5" strokeLinecap="round"
+          filter={faultGlow ? 'url(#glow-red)' : ''}
+          style={{ transition: 'all 0.3s' }} />
+        <rect x="63" y="145" width="33" height="7" rx="2"
+          fill={faultGlow ? 'rgba(248,113,113,0.3)' : '#1a0808'}
+          style={{ transition: 'all 0.3s' }} />
 
-        {/* ══════════════════════════════════════════
-            WHEELS — modern low-profile
-        ══════════════════════════════════════════ */}
+        {/* ── WING MIRRORS ── */}
+        <path d="M 468 120 L 480 116 L 484 124 L 470 127 Z"
+          fill="#1e293b" stroke="rgba(234,88,12,0.3)" strokeWidth="1" />
 
-        {/* REAR WHEEL */}
-        <g transform={`rotate(${wheelAngle}, 148, 205)`}>
-          {[0,45,90,135,180,225,270,315].map((deg) => (
-            <line key={deg}
-              x1={148 + 14 * Math.cos(deg * Math.PI/180)}
-              y1={205 + 14 * Math.sin(deg * Math.PI/180)}
-              x2={148 + 22 * Math.cos(deg * Math.PI/180)}
-              y2={205 + 22 * Math.sin(deg * Math.PI/180)}
-              stroke="#ea580c" strokeWidth="2" strokeLinecap="round"
-            />
-          ))}
-        </g>
-        {/* Tyre */}
-        <circle cx="148" cy="205" r="28" fill="none" stroke="#111" strokeWidth="10" />
-        <circle cx="148" cy="205" r="28" fill="none" stroke="#222" strokeWidth="8" />
-        {/* Rim */}
-        <circle cx="148" cy="205" r="22" fill="#1a1a2a" stroke="#2a2a3a" strokeWidth="1.5" />
-        {/* Centre cap */}
-        <circle cx="148" cy="205" r="6" fill="#ea580c" opacity="0.9" />
-        <circle cx="148" cy="205" r="3" fill="#fff" opacity="0.3" />
+        {/* ══ WHEELS ══ */}
+        <Wheel cx={168} cy={214} />
+        <Wheel cx={472} cy={214} />
 
-        {/* FRONT WHEEL */}
-        <g transform={`rotate(${wheelAngle}, 452, 205)`}>
-          {[0,45,90,135,180,225,270,315].map((deg) => (
-            <line key={deg}
-              x1={452 + 14 * Math.cos(deg * Math.PI/180)}
-              y1={205 + 14 * Math.sin(deg * Math.PI/180)}
-              x2={452 + 22 * Math.cos(deg * Math.PI/180)}
-              y2={205 + 22 * Math.sin(deg * Math.PI/180)}
-              stroke="#ea580c" strokeWidth="2" strokeLinecap="round"
-            />
-          ))}
-        </g>
-        <circle cx="452" cy="205" r="28" fill="none" stroke="#111" strokeWidth="10" />
-        <circle cx="452" cy="205" r="28" fill="none" stroke="#222" strokeWidth="8" />
-        <circle cx="452" cy="205" r="22" fill="#1a1a2a" stroke="#2a2a3a" strokeWidth="1.5" />
-        <circle cx="452" cy="205" r="6" fill="#ea580c" opacity="0.9" />
-        <circle cx="452" cy="205" r="3" fill="#fff" opacity="0.3" />
+        {/* Wheel arch lips */}
+        <path d="M 136 180 Q 168 168 200 180"
+          fill="none" stroke="rgba(234,88,12,0.35)" strokeWidth="2" strokeLinecap="round" />
+        <path d="M 440 180 Q 472 168 504 180"
+          fill="none" stroke="rgba(234,88,12,0.35)" strokeWidth="2" strokeLinecap="round" />
 
-        {/* Wheel arch highlights */}
-        <path d="M 120 178 Q 148 168 176 178" fill="none" stroke="rgba(234,88,12,0.2)" strokeWidth="2" />
-        <path d="M 424 178 Q 452 168 480 178" fill="none" stroke="rgba(234,88,12,0.2)" strokeWidth="2" />
-
-        {/* ══════════════════════════════════════════
+        {/* ══════════════════════════
             SERVICE OVERLAYS
-        ══════════════════════════════════════════ */}
+        ══════════════════════════ */}
 
-        {/* MAINTENANCE — engine glow */}
+        {/* MAINTENANCE ENGINE OVERLAY */}
         {engineGlow && (
-          <g>
-            <rect x="455" y="138" width="55" height="35" rx="4"
-              fill="rgba(234,88,12,0.1)" stroke="#ea580c" strokeWidth="1"
-              strokeDasharray="3 2">
-              <animate attributeName="opacity" values="0.5;1;0.5" dur="1.4s" repeatCount="indefinite" />
+          <g filter="url(#glow-orange)">
+            {/* Pulsing engine box */}
+            <rect x="462" y="138" width="68" height="34" rx="5"
+              fill="rgba(234,88,12,0.08)" stroke="#ea580c" strokeWidth="1.5" strokeDasharray="4 2">
+              <animate attributeName="stroke-opacity" values="0.4;1;0.4" dur="1.2s" repeatCount="indefinite" />
             </rect>
-            {/* Engine icon lines */}
-            <rect x="466" y="146" width="8" height="5" rx="1" fill="none" stroke="#ea580c" strokeWidth="1.2" />
-            <rect x="478" y="146" width="8" height="5" rx="1" fill="none" stroke="#ea580c" strokeWidth="1.2" />
-            <rect x="490" y="146" width="8" height="5" rx="1" fill="none" stroke="#ea580c" strokeWidth="1.2" />
-            <line x1="466" y1="151" x2="466" y2="158" stroke="#ea580c" strokeWidth="1.2" />
-            <line x1="474" y1="151" x2="474" y2="158" stroke="#ea580c" strokeWidth="1.2" />
-            <line x1="478" y1="151" x2="478" y2="158" stroke="#ea580c" strokeWidth="1.2" />
-            <line x1="486" y1="151" x2="486" y2="158" stroke="#ea580c" strokeWidth="1.2" />
-            <line x1="490" y1="151" x2="490" y2="158" stroke="#ea580c" strokeWidth="1.2" />
-            <line x1="498" y1="151" x2="498" y2="158" stroke="#ea580c" strokeWidth="1.2" />
-            <text x="482" y="168" textAnchor="middle" fontSize="7" fill="#ea580c" fontWeight="bold" letterSpacing="1">ENGINE</text>
+            {/* Engine icon — simplified */}
+            <rect x="472" y="146" width="10" height="6" rx="1" fill="none" stroke="#ea580c" strokeWidth="1.2" />
+            <rect x="486" y="146" width="10" height="6" rx="1" fill="none" stroke="#ea580c" strokeWidth="1.2" />
+            <rect x="500" y="146" width="10" height="6" rx="1" fill="none" stroke="#ea580c" strokeWidth="1.2" />
+            <line x1="477" y1="152" x2="477" y2="160" stroke="#ea580c" strokeWidth="1.2" />
+            <line x1="482" y1="152" x2="482" y2="160" stroke="#ea580c" strokeWidth="1.2" />
+            <line x1="491" y1="152" x2="491" y2="160" stroke="#ea580c" strokeWidth="1.2" />
+            <line x1="496" y1="152" x2="496" y2="160" stroke="#ea580c" strokeWidth="1.2" />
+            <line x1="505" y1="152" x2="505" y2="160" stroke="#ea580c" strokeWidth="1.2" />
+            <line x1="510" y1="152" x2="510" y2="160" stroke="#ea580c" strokeWidth="1.2" />
+            <text x="496" y="170" textAnchor="middle" fontSize="7" fill="#ea580c"
+              fontWeight="bold" letterSpacing="1.5">ENGINE</text>
+            {/* Oil drop */}
+            <path d="M 476 174 Q 476 180 480 180 Q 484 180 484 174 L 480 168 Z"
+              fill="#ea580c" opacity="0.7" />
           </g>
         )}
 
-        {/* MALFUNCTION — warning system */}
+        {/* MALFUNCTION OVERLAY */}
         {faultGlow && (
           <g>
-            {/* OBD scan line */}
-            <line x1="90" y1="168" x2="510" y2="168"
-              stroke="rgba(239,68,68,0.3)" strokeWidth="1" strokeDasharray="4 3">
-              <animate attributeName="x2" values="90;510;90" dur="1.5s" repeatCount="indefinite" />
+            {/* Sweep scan line */}
+            <line x1="100" y1="175" x2="540" y2="175"
+              stroke="rgba(239,68,68,0.2)" strokeWidth="1.5">
+              <animate attributeName="y1" values="140;200;140" dur="2s" repeatCount="indefinite" />
+              <animate attributeName="y2" values="140;200;140" dur="2s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0;0.8;0" dur="2s" repeatCount="indefinite" />
             </line>
-            {/* Warning triangle */}
-            <g>
-              <animate attributeName="opacity" values="0.5;1;0.5" dur="0.7s" repeatCount="indefinite" />
-              <polygon points="300,95 318,128 282,128"
-                fill="rgba(239,68,68,0.15)" stroke="#ef4444" strokeWidth="1.5" />
-              <text x="300" y="121" textAnchor="middle" fontSize="14" fill="#ef4444" fontWeight="bold">!</text>
+            {/* Warning triangle on bonnet */}
+            <g filter="url(#glow-red)">
+              <polygon points="320,92 340,128 300,128"
+                fill="rgba(239,68,68,0.15)" stroke="#ef4444" strokeWidth="2">
+                <animate attributeName="opacity" values="0.4;1;0.4" dur="0.6s" repeatCount="indefinite" />
+              </polygon>
+              <text x="320" y="122" textAnchor="middle" fontSize="16"
+                fill="#ef4444" fontWeight="bold">!</text>
             </g>
-            {/* Fault dots at key positions */}
+            {/* Fault nodes */}
             {[
-              { cx: 148, cy: 200, delay: '0s' },
-              { cx: 220, cy: 168, delay: '0.15s' },
-              { cx: 300, cy: 160, delay: '0.3s' },
-              { cx: 380, cy: 168, delay: '0.45s' },
-              { cx: 452, cy: 200, delay: '0.6s' },
-            ].map(({ cx, cy, delay }, i) => (
-              <circle key={i} cx={cx} cy={cy} r="4"
-                fill="#ef4444" opacity="0.8">
-                <animate attributeName="opacity" values="0.1;1;0.1" dur="0.9s" begin={delay} repeatCount="indefinite" />
-                <animate attributeName="r" values="3;5;3" dur="0.9s" begin={delay} repeatCount="indefinite" />
-              </circle>
+              { cx: 168, cy: 210 },
+              { cx: 230, cy: 168 },
+              { cx: 320, cy: 155 },
+              { cx: 410, cy: 168 },
+              { cx: 472, cy: 210 },
+            ].map(({ cx, cy }, i) => (
+              <g key={i}>
+                <circle cx={cx} cy={cy} r="5" fill="#ef4444" opacity="0.9"
+                  filter="url(#glow-red)">
+                  <animate attributeName="r" values="3;6;3" dur="0.8s"
+                    begin={`${i * 0.15}s`} repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.2;1;0.2" dur="0.8s"
+                    begin={`${i * 0.15}s`} repeatCount="indefinite" />
+                </circle>
+                {/* Connector lines between nodes */}
+                {i < 4 && (
+                  <line
+                    x1={cx} y1={cy}
+                    x2={[230,320,410,472][i]}
+                    y2={[168,155,168,210][i]}
+                    stroke="rgba(239,68,68,0.2)" strokeWidth="1" strokeDasharray="3 3">
+                    <animate attributeName="opacity" values="0;0.6;0" dur="0.8s"
+                      begin={`${i * 0.15}s`} repeatCount="indefinite" />
+                  </line>
+                )}
+              </g>
             ))}
+            {/* OBD code text */}
+            <text x="320" y="240" textAnchor="middle" fontSize="8"
+              fill="rgba(239,68,68,0.5)" fontFamily="monospace" letterSpacing="2">
+              P0300 · P0420 · SCANNING...
+              <animate attributeName="opacity" values="0.3;0.8;0.3" dur="1.5s" repeatCount="indefinite" />
+            </text>
           </g>
         )}
 
-        {/* IDLE — subtle floating particles */}
+        {/* IDLE PARTICLES */}
         {!serviceType && (
-          <g opacity="0.5">
+          <g>
             {[
-              { cx: 260, baseY: 55, dur: '2.2s' },
-              { cx: 230, baseY: 60, dur: '2.8s' },
-              { cx: 290, baseY: 58, dur: '1.9s' },
-              { cx: 310, baseY: 62, dur: '3.1s' },
-            ].map(({ cx, baseY, dur }, i) => (
-              <circle key={i} cx={cx} cy={baseY} r="2" fill="#ea580c">
-                <animate attributeName="cy" values={`${baseY};${baseY-10};${baseY}`} dur={dur} repeatCount="indefinite" />
-                <animate attributeName="opacity" values="0.2;0.7;0.2" dur={dur} repeatCount="indefinite" />
+              { cx: 280, y: 52, dur: '2.1s', r: 2.5 },
+              { cx: 310, y: 48, dur: '2.7s', r: 2 },
+              { cx: 340, y: 55, dur: '1.9s', r: 2 },
+              { cx: 255, y: 58, dur: '3.2s', r: 1.5 },
+              { cx: 365, y: 50, dur: '2.4s', r: 1.5 },
+            ].map(({ cx, y, dur, r }, i) => (
+              <circle key={i} cx={cx} cy={y} r={r} fill="#ea580c" opacity="0.5">
+                <animate attributeName="cy" values={`${y};${y-12};${y}`} dur={dur} repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.15;0.6;0.15" dur={dur} repeatCount="indefinite" />
               </circle>
             ))}
           </g>
@@ -301,16 +325,26 @@ export default function CarDiagram({ serviceType }: { serviceType: ServiceType }
       </svg>
 
       {/* Status pill */}
-      <div className="mt-1 h-6 flex items-center justify-center">
+      <div className="mt-2 h-7 flex items-center justify-center">
         {serviceType && (
-          <span className="text-xs font-semibold px-4 py-1 rounded-full"
+          <div className="flex items-center gap-2 text-xs font-semibold px-4 py-1.5 rounded-full"
             style={{
-              background: serviceType === 'maintenance' ? 'rgba(234,88,12,0.15)' : 'rgba(239,68,68,0.15)',
-              color: serviceType === 'maintenance' ? '#ea580c' : '#ef4444',
-              border: `1px solid ${serviceType === 'maintenance' ? 'rgba(234,88,12,0.3)' : 'rgba(239,68,68,0.3)'}`,
+              background: serviceType === 'maintenance'
+                ? 'rgba(234,88,12,0.12)' : 'rgba(239,68,68,0.12)',
+              color: serviceType === 'maintenance' ? '#fb923c' : '#f87171',
+              border: `1px solid ${serviceType === 'maintenance'
+                ? 'rgba(234,88,12,0.3)' : 'rgba(239,68,68,0.3)'}`,
             }}>
-            {serviceType === 'maintenance' ? '🔧 وضع الصيانة الدورية' : '⚠️ وضع تشخيص الأعطال'}
-          </span>
+            <span style={{
+              width: 6, height: 6, borderRadius: '50%',
+              background: serviceType === 'maintenance' ? '#ea580c' : '#ef4444',
+              display: 'inline-block',
+              boxShadow: `0 0 6px ${serviceType === 'maintenance' ? '#ea580c' : '#ef4444'}`,
+            }} />
+            {serviceType === 'maintenance'
+              ? '🔧 وضع الصيانة الدورية'
+              : '⚠️ وضع تشخيص الأعطال'}
+          </div>
         )}
       </div>
     </div>
