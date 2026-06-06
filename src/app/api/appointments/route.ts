@@ -4,8 +4,7 @@ import { createAdminClient } from '@/lib/supabase';
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const db = createAdminClient();
-
-  const { data, error } = await db.from('appointments').insert({
+  const { data, error } = await (db.from('appointments') as any).insert({
     customer_name: body.customer_name,
     customer_phone: body.customer_phone,
     customer_area: body.customer_area,
@@ -18,7 +17,6 @@ export async function POST(request: NextRequest) {
     notes: body.notes || null,
     status: 'pending',
   }).select().single();
-
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data, { status: 201 });
 }

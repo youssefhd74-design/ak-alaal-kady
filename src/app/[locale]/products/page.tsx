@@ -1,14 +1,12 @@
-import { useTranslations, useLocale } from 'next-intl';
-import { supabase } from '@/lib/supabase';
 import Navbar from '@/components/shared/Navbar';
 import Footer from '@/components/shared/Footer';
 import ProductsClient from '@/components/storefront/ProductsClient';
+import { supabase } from '@/lib/supabase';
 
 export default async function ProductsPage() {
-  // Fetch products and categories server-side
   const [{ data: products }, { data: categories }] = await Promise.all([
-    supabase.from('products').select('*, categories(*)').eq('is_active', true).order('created_at', { ascending: false }),
-    supabase.from('categories').select('*').order('name_ar'),
+    (supabase.from('products') as any).select('*, categories(*)').eq('is_active', true).order('created_at', { ascending: false }),
+    (supabase.from('categories') as any).select('*').order('name_ar'),
   ]);
 
   return (

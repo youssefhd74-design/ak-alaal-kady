@@ -6,24 +6,19 @@ export async function GET(request: NextRequest) {
   const key = searchParams.get('key');
 
   if (key) {
-    const { data } = await supabase.from('settings').select('value').eq('key', key).single();
+    const { data } = await (supabase.from('settings') as any).select('value').eq('key', key).single();
     return NextResponse.json({ value: data?.value || '' });
   }
 
-  const { data } = await supabase.from('settings').select('*');
+  const { data } = await (supabase.from('settings') as any).select('*');
   return NextResponse.json(data || []);
 }
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const db = createAdminClient();
-
-  const upserts = Object.entries(body).map(([key, value]) => ({
-    key,
-    value: String(value),
-  }));
-
-  const { error } = await db.from('settings').upsert(upserts, { onConflict: 'key' });
+  const upserts = Object.entries(body).map(([key, value]) => ({ key, value: String(value) }));
+  const { error } = await (db.from('settings') as any).upsert(upserts, { onConflict: 'key' });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });
 }
