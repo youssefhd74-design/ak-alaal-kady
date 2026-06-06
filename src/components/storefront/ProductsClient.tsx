@@ -5,7 +5,6 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Search, ShoppingCart, Plus, Minus, X, Package } from 'lucide-react';
-// types inferred
 import toast from 'react-hot-toast';
 
 interface Props {

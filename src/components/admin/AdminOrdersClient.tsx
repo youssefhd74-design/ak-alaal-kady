@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronDown, Eye, X } from 'lucide-react';
-import type { Order } from '@/lib/database.types';
+
 import toast from 'react-hot-toast';
 
 const STATUSES = [
@@ -12,10 +12,10 @@ const STATUSES = [
   { value: 'cancelled', label: 'ملغي', cls: 'badge-cancelled' },
 ];
 
-export default function AdminOrdersClient({ initialOrders }: { initialOrders: Order[] }) {
+export default function AdminOrdersClient({ initialOrders }: { initialOrders: any[] }) {
   const [orders, setOrders] = useState(initialOrders);
   const [filter, setFilter] = useState('');
-  const [viewOrder, setViewOrder] = useState<Order | null>(null);
+  const [viewOrder, setViewOrder] = useState<any>(null);
 
   const filtered = filter ? orders.filter((o) => o.status === filter) : orders;
 

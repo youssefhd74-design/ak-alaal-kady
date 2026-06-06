@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Plus, Pencil, Trash2, Eye, EyeOff, Package, AlertTriangle, X, Check } from 'lucide-react';
-// types inferred from Supabase untyped client
 import toast from 'react-hot-toast';
 
 interface Props {

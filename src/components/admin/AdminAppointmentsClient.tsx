@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Eye, X, Wrench, AlertTriangle } from 'lucide-react';
-// types inferred
 import toast from 'react-hot-toast';
 
 const STATUSES = [
@@ -15,7 +14,7 @@ const STATUSES = [
 export default function AdminAppointmentsClient({ initialAppointments }: { initialAppointments: any[] }) {
   const [appointments, setAppointments] = useState(initialAppointments);
   const [filter, setFilter] = useState('');
-  const [view, setView] = useState<Appointment | null>(null);
+  const [view, setView] = useState<any>(null);
 
   const filtered = filter ? appointments.filter((a) => a.status === filter) : appointments;
   const statusMap = Object.fromEntries(STATUSES.map((s) => [s.value, s]));
