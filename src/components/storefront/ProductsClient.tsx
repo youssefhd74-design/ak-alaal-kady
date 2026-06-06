@@ -107,17 +107,6 @@ export default function ProductsClient({ initialProducts, categories }: Props) {
           <h1 className="text-2xl font-bold text-gray-800">{t('products.title')}</h1>
           <p className="text-gray-500 text-sm mt-1">{t('products.subtitle')}</p>
         </div>
-        <button
-          onClick={() => setCartOpen(true)}
-          className="relative bg-brand-600 text-white p-3 rounded-xl hover:bg-brand-700 transition-colors"
-        >
-          <ShoppingCart size={20} />
-          {cartCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 bg-white text-brand-700 text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center border border-brand-200">
-              {cartCount}
-            </span>
-          )}
-        </button>
       </div>
 
       {/* Filters */}
@@ -210,6 +199,21 @@ export default function ProductsClient({ initialProducts, categories }: Props) {
             );
           })}
         </div>
+      )}
+
+      {/* Floating Cart Button */}
+      {cartCount > 0 && (
+        <button
+          onClick={() => setCartOpen(true)}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-bold px-6 py-3.5 rounded-full shadow-2xl transition-all"
+          style={{ boxShadow: '0 8px 32px rgba(234,88,12,0.45)' }}
+        >
+          <ShoppingCart size={20} />
+          <span>{isAr ? 'السلة' : 'Cart'}</span>
+          <span className="bg-white text-brand-700 text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
+            {cartCount}
+          </span>
+        </button>
       )}
 
       {/* Cart Sidebar */}
