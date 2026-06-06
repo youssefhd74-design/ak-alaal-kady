@@ -5,7 +5,7 @@ import { Plus, Pencil, Trash2, Eye, EyeOff, Package, AlertTriangle, X, Check } f
 import toast from 'react-hot-toast';
 
 interface Props {
-  initialProducts: (Product & { categories?: Category | null })[];
+  initialProducts: any[];
   categories: any[];
 }
 
@@ -17,7 +17,7 @@ const emptyForm = {
 export default function AdminProductsClient({ initialProducts, categories }: Props) {
   const [products, setProducts] = useState(initialProducts);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<Product | null>(null);
+  const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState<typeof emptyForm>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
