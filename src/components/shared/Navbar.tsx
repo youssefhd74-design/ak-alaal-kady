@@ -4,7 +4,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
-import { Menu, X, Wrench } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 
 export default function Navbar() {
   const t = useTranslations();
@@ -12,11 +12,10 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
-
-  const otherLocale = locale === 'ar' ? 'en' : 'ar';
+  const isAr = locale === 'ar';
+  const otherLocale = isAr ? 'en' : 'ar';
 
   function switchLocale() {
-    // Replace current locale prefix with the other
     const newPath = pathname.replace(`/${locale}`, `/${otherLocale}`);
     router.push(newPath);
   }
@@ -28,68 +27,90 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="bg-white shadow-sm sticky top-0 z-50 border-b border-orange-100">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href={`/${locale}`} className="flex items-center gap-2">
-            <div className="bg-brand-600 text-white rounded-lg p-1.5">
-              <Wrench size={20} />
+    <>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&display=swap');`}</style>
+
+      <nav className="bg-white shadow-sm sticky top-0 z-50 border-b border-orange-100">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+
+            {/* Logo */}
+            <Link href={`/${locale}`} className="flex items-center gap-3">
+              {/* Logo image — dark background cropped tight */}
+              <div className="h-10 w-10 rounded-lg overflow-hidden bg-gray-900 shrink-0 flex items-center justify-center">
+                <img
+                  src="/ak-logo.png"
+                  alt="AK Logo"
+                  className="h-8 w-auto object-contain"
+                />
+              </div>
+              {/* Brand name */}
+              <div className="flex flex-col leading-none">
+                <span
+                  style={{
+                    fontFamily: "'Cormorant Garamond', Georgia, serif",
+                    fontWeight: 700,
+                    fontSize: '21px',
+                    letterSpacing: '0.5px',
+                    color: '#111',
+                    lineHeight: 1.1,
+                  }}
+                >
+                  Alaaalkady
+                </span>
+                <span className="text-xs text-gray-400 mt-0.5">
+                  {isAr ? 'متخصصون في رينو' : 'Renault Specialists'}
+                </span>
+              </div>
+            </Link>
+
+            {/* Desktop nav */}
+            <div className="hidden md:flex items-center gap-6">
+              {links.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-gray-600 hover:text-brand-600 font-medium transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
             </div>
-            <span className="font-bold text-lg text-brand-700">AK</span>
-            <span className="text-gray-500 text-sm hidden sm:block">
-              {locale === 'ar' ? 'علاء القاضي' : 'Alaal Kady'}
-            </span>
-          </Link>
 
-          {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-6">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-gray-600 hover:text-brand-600 font-medium transition-colors"
+            {/* Right */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={switchLocale}
+                className="border border-brand-300 text-brand-700 text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-brand-50 transition-colors"
               >
-                {link.label}
-              </Link>
-            ))}
+                {t('common.lang')}
+              </button>
+              <button
+                className="md:hidden p-2 text-gray-600"
+                onClick={() => setMenuOpen(!menuOpen)}
+              >
+                {menuOpen ? <X size={22} /> : <Menu size={22} />}
+              </button>
+            </div>
           </div>
 
-          {/* Right: lang toggle + mobile menu */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={switchLocale}
-              className="border border-brand-300 text-brand-700 text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-brand-50 transition-colors"
-            >
-              {t('common.lang')}
-            </button>
-
-            <button
-              className="md:hidden p-2 text-gray-600"
-              onClick={() => setMenuOpen(!menuOpen)}
-              aria-label="Toggle menu"
-            >
-              {menuOpen ? <X size={22} /> : <Menu size={22} />}
-            </button>
-          </div>
+          {/* Mobile menu */}
+          {menuOpen && (
+            <div className="md:hidden py-3 border-t border-gray-100 flex flex-col gap-2 pb-4">
+              {links.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-gray-700 hover:text-brand-600 px-2 py-2 font-medium"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
-
-        {/* Mobile menu */}
-        {menuOpen && (
-          <div className="md:hidden py-3 border-t border-gray-100 flex flex-col gap-2 pb-4">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-gray-700 hover:text-brand-600 px-2 py-2 font-medium"
-                onClick={() => setMenuOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-    </nav>
+      </nav>
+    </>
   );
 }

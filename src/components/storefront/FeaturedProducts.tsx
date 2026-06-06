@@ -2,7 +2,6 @@
 
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Package, Star } from 'lucide-react';
 
 export default function FeaturedProducts({ products }: { products: any[] }) {
@@ -12,6 +11,7 @@ export default function FeaturedProducts({ products }: { products: any[] }) {
   return (
     <section className="py-14 px-4 bg-gray-50 border-b border-gray-100">
       <div className="max-w-6xl mx-auto">
+        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -26,12 +26,13 @@ export default function FeaturedProducts({ products }: { products: any[] }) {
           </div>
           <Link
             href={`/${locale}/products`}
-            className="text-brand-600 text-sm font-medium hover:underline"
+            className="text-brand-600 text-sm font-semibold hover:underline flex items-center gap-1"
           >
-            {isAr ? 'عرض الكل' : 'View all'}
+            {isAr ? 'عرض الكل ←' : '→ View all'}
           </Link>
         </div>
 
+        {/* Grid — bigger cards on desktop */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {products.map((product) => {
             const inStock = product.stock_quantity > 0;
@@ -39,33 +40,37 @@ export default function FeaturedProducts({ products }: { products: any[] }) {
               <Link
                 key={product.id}
                 href={`/${locale}/products`}
-                className="card hover:shadow-md transition-shadow overflow-hidden group"
+                className="card hover:shadow-lg transition-shadow overflow-hidden group flex flex-col"
               >
-                {/* Image */}
-                <div className="h-32 bg-gray-50 flex items-center justify-center border-b border-gray-100">
+                {/* Image — taller on desktop */}
+                <div className="h-36 sm:h-44 bg-gray-50 flex items-center justify-center border-b border-gray-100 group-hover:bg-orange-50 transition-colors">
                   {product.image_url ? (
-                    <Image
+                    <img
                       src={product.image_url}
                       alt={isAr ? product.name_ar : product.name_en}
-                      width={100}
-                      height={100}
-                      className="object-contain h-24"
+                      className="object-contain h-28 sm:h-36 w-full px-2"
                     />
                   ) : (
-                    <Package size={36} className="text-gray-300" />
+                    <Package size={40} className="text-gray-300" />
                   )}
                 </div>
-                <div className="p-3">
-                  <p className="text-xs font-semibold text-gray-800 leading-tight mb-1 line-clamp-2">
+
+                {/* Info */}
+                <div className="p-3 flex flex-col flex-1">
+                  <p className="text-xs sm:text-sm font-semibold text-gray-800 leading-tight mb-2 line-clamp-2 flex-1">
                     {isAr ? product.name_ar : product.name_en}
                   </p>
-                  <p className="text-brand-600 font-bold text-sm">
-                    {product.price.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}
+                  <p className="text-brand-600 font-bold text-sm sm:text-base">
+                    {product.price?.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}
                   </p>
-                  <span className={`inline-block mt-1.5 text-xs px-1.5 py-0.5 rounded-full font-medium ${
-                    inStock ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+                  <span className={`inline-block mt-1.5 text-xs px-2 py-0.5 rounded-full font-medium w-fit ${
+                    inStock
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-red-100 text-red-600'
                   }`}>
-                    {inStock ? (isAr ? 'متوفر' : 'In Stock') : (isAr ? 'غير متوفر' : 'Out of Stock')}
+                    {inStock
+                      ? (isAr ? '✓ متوفر' : '✓ In Stock')
+                      : (isAr ? '✗ نفد' : '✗ Out of Stock')}
                   </span>
                 </div>
               </Link>
