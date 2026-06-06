@@ -372,14 +372,35 @@ export default function BookingPage() {
                 </p>
               </div>
 
+              {/* Mobile CTA — only visible on mobile */}
+              <div className="lg:hidden flex flex-col gap-3">
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="w-full py-4 rounded-xl font-bold text-base transition-all"
+                  style={{
+                    background: progress === 100 ? '#ea580c' : '#e5e7eb',
+                    color: progress === 100 ? 'white' : '#9ca3af',
+                  }}
+                >
+                  {submitting
+                    ? (isAr ? 'جاري الإرسال...' : 'Sending...')
+                    : (isAr ? 'تأكيد الموعد 🔒' : 'Secure My Appointment 🔒')}
+                </button>
+                <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
+                  <Shield size={12} />
+                  <span>{isAr ? 'لا يلزم دفع حتى اكتمال الخدمة' : 'No payment required until service is complete'}</span>
+                </div>
+              </div>
+
             </div>
 
-            {/* ── RIGHT: Sticky Summary ── */}
+            {/* ── RIGHT: Sticky Summary (desktop only) ── */}
             <div className="lg:col-span-1">
               <div className="sticky top-20 flex flex-col gap-4">
 
-                {/* Summary card */}
-                <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                {/* Summary card — desktop only */}
+                <div className="hidden lg:block bg-white rounded-2xl shadow-sm overflow-hidden">
                   <div className="bg-gray-900 px-5 py-4">
                     <p className="text-white font-bold text-sm">
                       {isAr ? 'ملخص الحجز' : 'Booking Summary'}
@@ -422,11 +443,11 @@ export default function BookingPage() {
                   </div>
                 </div>
 
-                {/* CTA */}
+                {/* CTA — desktop only */}
                 <button
                   onClick={handleSubmit}
                   disabled={submitting || progress < 100}
-                  className="w-full py-4 rounded-xl font-bold text-base transition-all"
+                  className="hidden lg:block w-full py-4 rounded-xl font-bold text-base transition-all"
                   style={{
                     background: progress === 100 ? '#ea580c' : '#e5e7eb',
                     color: progress === 100 ? 'white' : '#9ca3af',
@@ -438,32 +459,18 @@ export default function BookingPage() {
                     : (isAr ? 'تأكيد الموعد 🔒' : 'Secure My Appointment 🔒')}
                 </button>
 
-                {/* Trust signal */}
-                <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
+                {/* Trust signal — desktop only */}
+                <div className="hidden lg:flex items-center justify-center gap-2 text-xs text-gray-400">
                   <Shield size={12} />
                   <span>{isAr ? 'لا يلزم دفع حتى اكتمال الخدمة' : 'No payment required until service is complete'}</span>
                 </div>
 
-                {/* Mobile submit (shown below form on mobile) */}
               </div>
             </div>
 
           </div>
 
-          {/* Mobile CTA */}
-          <div className="lg:hidden mt-6 flex flex-col gap-3">
-            <button
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="w-full py-4 rounded-xl font-bold text-base bg-brand-600 text-white"
-            >
-              {submitting ? (isAr ? 'جاري الإرسال...' : 'Sending...') : (isAr ? 'تأكيد الموعد 🔒' : 'Secure My Appointment 🔒')}
-            </button>
-            <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
-              <Shield size={12} />
-              <span>{isAr ? 'لا يلزم دفع حتى اكتمال الخدمة' : 'No payment required until service is complete'}</span>
-            </div>
-          </div>
+
 
         </div>
       </main>
