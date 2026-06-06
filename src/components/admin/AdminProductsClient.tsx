@@ -28,7 +28,7 @@ export default function AdminProductsClient({ initialProducts, categories }: Pro
     setModalOpen(true);
   }
 
-  function openEdit(product: Product) {
+  function openEdit(product: any) {
     setEditing(product);
     setForm({
       name_ar: product.name_ar,
@@ -99,7 +99,7 @@ export default function AdminProductsClient({ initialProducts, categories }: Pro
     }
   }
 
-  async function toggleActive(product: Product) {
+  async function toggleActive(product: any) {
     try {
       const res = await fetch(`/api/products/${product.id}`, {
         method: 'PATCH',

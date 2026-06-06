@@ -8,7 +8,7 @@ import { Search, ShoppingCart, Plus, Minus, X, Package } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface Props {
-  initialProducts: (Product & { categories?: Category | null })[];
+  initialProducts: any[];
   categories: any[];
 }
 
@@ -51,7 +51,7 @@ export default function ProductsClient({ initialProducts, categories }: Props) {
     });
   }
 
-  const cartItems: (OrderItem & { product: Product })[] = Array.from(cart.entries())
+  const cartItems: (any & { product: any })[] = Array.from(cart.entries())
     .map(([id, qty]) => {
       const product = initialProducts.find((p) => p.id === id)!;
       if (!product) return null;
@@ -146,7 +146,7 @@ export default function ProductsClient({ initialProducts, categories }: Props) {
         </select>
       </div>
 
-      {/* Product grid */}
+      {/* any grid */}
       {filtered.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
           <Package size={48} className="mx-auto mb-3 opacity-40" />
@@ -255,7 +255,7 @@ export default function ProductsClient({ initialProducts, categories }: Props) {
                   onClick={() => { setCartOpen(false); setCheckoutOpen(true); }}
                   className="w-full btn-primary text-base py-3"
                 >
-                  {isAr ? 'إتمام الطلب' : 'Proceed to Order'}
+                  {isAr ? 'إتمام الطلب' : 'Proceed to any'}
                 </button>
               </div>
             )}
@@ -299,7 +299,7 @@ export default function ProductsClient({ initialProducts, categories }: Props) {
               </div>
 
               <button onClick={handleOrder} disabled={submitting} className="w-full btn-primary py-3 text-base disabled:opacity-70">
-                {submitting ? t('common.loading') : isAr ? 'تأكيد وإرسال الطلب' : 'Confirm & Submit Order'}
+                {submitting ? t('common.loading') : isAr ? 'تأكيد وإرسال الطلب' : 'Confirm & Submit any'}
               </button>
             </div>
           </div>

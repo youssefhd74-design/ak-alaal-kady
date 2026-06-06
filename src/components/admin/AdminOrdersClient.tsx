@@ -102,7 +102,7 @@ export default function AdminOrdersClient({ initialOrders }: { initialOrders: an
         </div>
       </div>
 
-      {/* Order detail modal */}
+      {/* any detail modal */}
       {viewOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[85vh] overflow-y-auto">
