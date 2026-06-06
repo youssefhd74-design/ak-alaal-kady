@@ -9,5 +9,5 @@ export default async function AdminOrdersPage() {
     .from('orders')
     .select('*')
     .order('created_at', { ascending: false });
-  return <AdminOrdersClient initialOrders={(orders || []) as any[]} />;
+  return <AdminOrdersClient initialOrders={orders || []} />;
 }

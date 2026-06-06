@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Eye, X, Wrench, AlertTriangle } from 'lucide-react';
-import type { Appointment } from '@/lib/database.types';
+// types inferred
 import toast from 'react-hot-toast';
 
 const STATUSES = [
@@ -12,7 +12,7 @@ const STATUSES = [
   { value: 'cancelled', label: 'ملغي', cls: 'badge-cancelled' },
 ];
 
-export default function AdminAppointmentsClient({ initialAppointments }: { initialAppointments: Appointment[] }) {
+export default function AdminAppointmentsClient({ initialAppointments }: { initialAppointments: any[] }) {
   const [appointments, setAppointments] = useState(initialAppointments);
   const [filter, setFilter] = useState('');
   const [view, setView] = useState<Appointment | null>(null);

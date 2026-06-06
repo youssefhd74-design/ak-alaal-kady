@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { Plus, Pencil, Trash2, Eye, EyeOff, Package, AlertTriangle, X, Check } from 'lucide-react';
-import type { Product, Category } from '@/lib/database.types';
+// types inferred from Supabase untyped client
 import toast from 'react-hot-toast';
 
 interface Props {
   initialProducts: (Product & { categories?: Category | null })[];
-  categories: Category[];
+  categories: any[];
 }
 
 const emptyForm = {

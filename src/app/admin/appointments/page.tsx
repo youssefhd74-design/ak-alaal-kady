@@ -10,5 +10,5 @@ export default async function AdminAppointmentsPage() {
     .select('*')
     .order('preferred_date', { ascending: true })
     .order('created_at', { ascending: false });
-  return <AdminAppointmentsClient initialAppointments={(appointments || []) as any[]} />;
+  return <AdminAppointmentsClient initialAppointments={appointments || []} />;
 }

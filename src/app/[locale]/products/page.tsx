@@ -5,8 +5,8 @@ import { supabase } from '@/lib/supabase';
 
 export default async function ProductsPage() {
   const [{ data: products }, { data: categories }] = await Promise.all([
-    (supabase.from('products') as any).select('*, categories(*)').eq('is_active', true).order('created_at', { ascending: false }),
-    (supabase.from('categories') as any).select('*').order('name_ar'),
+    supabase.from('products').select('*, categories(*)').eq('is_active', true).order('created_at', { ascending: false }),
+    supabase.from('categories').select('*').order('name_ar'),
   ]);
 
   return (
@@ -14,10 +14,7 @@ export default async function ProductsPage() {
       <Navbar />
       <main className="flex-1 py-8 px-4">
         <div className="max-w-6xl mx-auto">
-          <ProductsClient
-            initialProducts={products || []}
-            categories={categories || []}
-          />
+          <ProductsClient initialProducts={products || []} categories={categories || []} />
         </div>
       </main>
       <Footer />

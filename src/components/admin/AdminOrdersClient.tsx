@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronDown, Eye, X } from 'lucide-react';
-import type { Order, OrderItem } from '@/lib/database.types';
+import type { Order } from '@/lib/database.types';
 import toast from 'react-hot-toast';
 
 const STATUSES = [
@@ -131,7 +131,7 @@ export default function AdminOrdersClient({ initialOrders }: { initialOrders: Or
               <div>
                 <h3 className="font-bold text-gray-700 mb-2">الأصناف المطلوبة</h3>
                 <div className="border rounded-xl overflow-hidden">
-                  {(viewOrder.items as OrderItem[]).map((item, i) => (
+                  {(viewOrder.items as any[]).map((item, i) => (
                     <div key={i} className="flex justify-between p-3 border-b last:border-0 text-sm">
                       <div>
                         <p className="font-medium">{item.name_ar}</p>

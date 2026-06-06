@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient, supabase } from '@/lib/supabase';
 
 export async function GET() {
-  const { data, error } = await (supabase.from('products') as any)
+  const { data, error } = await supabase
+    .from('products')
     .select('*, categories(*)')
     .eq('is_active', true)
     .order('created_at', { ascending: false });
@@ -13,7 +14,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const db = createAdminClient();
-  const { data, error } = await (db.from('products') as any).insert(body).select().single();
+  const { data, error } = await db.from('products').insert(body).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data, { status: 201 });
 }
