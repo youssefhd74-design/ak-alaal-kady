@@ -202,27 +202,27 @@ export default function AdminProductsClient({ initialProducts, categories }: Pro
                     <td className="px-4 py-3">
                       <button
                         onClick={() => toggleStock(product)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${inStock ? 'bg-green-500' : 'bg-gray-300'}`}
+                        className={`text-xs font-medium px-3 py-1 rounded-full border ${inStock ? 'bg-green-100 text-green-700 border-green-300' : 'bg-gray-100 text-gray-500 border-gray-300'}`}
                       >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${inStock ? 'translate-x-6' : 'translate-x-1'}`} />
+                        {inStock ? '✓ متوفر' : '✗ نفد'}
                       </button>
                     </td>
                     {/* Visible toggle */}
                     <td className="px-4 py-3">
                       <button
                         onClick={() => toggleField(product, 'is_active')}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${product.is_active ? 'bg-blue-500' : 'bg-gray-300'}`}
+                        className={`text-xs font-medium px-3 py-1 rounded-full border ${product.is_active ? 'bg-blue-100 text-blue-700 border-blue-300' : 'bg-gray-100 text-gray-500 border-gray-300'}`}
                       >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${product.is_active ? 'translate-x-6' : 'translate-x-1'}`} />
+                        {product.is_active ? '✓ ظاهر' : '✗ مخفي'}
                       </button>
                     </td>
                     {/* Featured toggle */}
                     <td className="px-4 py-3">
                       <button
                         onClick={() => toggleField(product, 'is_featured')}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${product.is_featured ? 'bg-yellow-400' : 'bg-gray-300'}`}
+                        className={`text-xs font-medium px-3 py-1 rounded-full border ${product.is_featured ? 'bg-yellow-100 text-yellow-700 border-yellow-300' : 'bg-gray-100 text-gray-500 border-gray-300'}`}
                       >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${product.is_featured ? 'translate-x-6' : 'translate-x-1'}`} />
+                        {product.is_featured ? '⭐ مميز' : '— عادي'}
                       </button>
                     </td>
                     <td className="px-4 py-3">
