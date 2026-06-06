@@ -36,7 +36,7 @@ export default function Navbar() {
 
             {/* Logo */}
             <Link href={`/${locale}`} className="flex items-center gap-3">
-              {/* Logo image — dark background cropped tight */}
+              {/* AK Logo — show only the AK monogram */}
               <div className="h-10 w-10 rounded-lg overflow-hidden bg-gray-900 shrink-0 flex items-center justify-center">
                 <img
                   src="/ak-logo.png"
@@ -50,13 +50,13 @@ export default function Navbar() {
                   style={{
                     fontFamily: "'Cormorant Garamond', Georgia, serif",
                     fontWeight: 700,
-                    fontSize: '21px',
+                    fontSize: '19px',
                     letterSpacing: '0.5px',
                     color: '#111',
                     lineHeight: 1.1,
                   }}
                 >
-                  Alaaalkady
+                  Alaa Al Kady
                 </span>
                 <span className="text-xs text-gray-400 mt-0.5">
                   {isAr ? 'متخصصون في رينو' : 'Renault Specialists'}
