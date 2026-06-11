@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
     preferred_date: body.preferred_date,
     preferred_time: body.preferred_time || null,
     notes: body.notes || null,
+    door_to_door: body.door_to_door || false,
     status: 'pending',
   }).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

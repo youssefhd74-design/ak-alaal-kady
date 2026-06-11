@@ -70,6 +70,11 @@ export default function AdminAppointmentsClient({ initialAppointments }: { initi
                         ? <><Wrench size={13} className="text-brand-500" /> صيانة دورية</>
                         : <><AlertTriangle size={13} className="text-yellow-500" /> عطل</>}
                     </span>
+                    {appt.door_to_door && (
+                      <span className="inline-block mt-1 text-xs bg-brand-50 text-brand-600 px-2 py-0.5 rounded-full font-medium">
+                        🚗 من الباب للباب
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-gray-600">{appt.car_model} {appt.car_year}</td>
                   <td className="px-4 py-3">
@@ -124,6 +129,7 @@ export default function AdminAppointmentsClient({ initialAppointments }: { initi
                 { label: 'التاريخ المفضل', value: new Date(view.preferred_date).toLocaleDateString('ar-EG') },
                 { label: 'الوقت', value: view.preferred_time || 'أي وقت' },
                 { label: 'الحالة', value: statusMap[view.status]?.label },
+                { label: 'من الباب للباب', value: view.door_to_door ? '✓ مفعّلة' : 'غير مفعّلة' },
                 { label: 'تاريخ الحجز', value: new Date(view.created_at).toLocaleString('ar-EG') },
               ].map(({ label, value }) => (
                 <div key={label} className="bg-gray-50 rounded-lg p-3">

@@ -28,3 +28,6 @@ CREATE POLICY "Public insert product requests" ON product_requests
 
 -- Limit featured to 6 via application logic (not DB constraint)
 
+
+-- v3: Door-to-door service flag
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS door_to_door BOOLEAN DEFAULT FALSE;

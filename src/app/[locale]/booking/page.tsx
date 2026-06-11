@@ -96,10 +96,12 @@ export default function BookingPage() {
     customer_area: '', customer_address: '',
     car_model: '', car_year: '',
     preferred_date: '', preferred_time: '', notes: '',
+    door_to_door: false,
   });
   const [submitting, setSubmitting] = useState(false);
 
   const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
+  const toggleD2D = () => setForm(p => ({ ...p, door_to_door: !p.door_to_door }));
 
   const summary = {
     service: form.service_type === 'maintenance'
@@ -363,14 +365,49 @@ export default function BookingPage() {
                 </div>
               </div>
 
-              {/* Vehicle pickup note */}
-              <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-700">
-                <Car size={16} className="shrink-0 mt-0.5" />
-                <p>{isAr
-                  ? '🚗 خدمة استلام وتسليم السيارة متاحة في مناطق محددة'
-                  : '🚗 Vehicle pickup & drop-off available in select areas'}
-                </p>
-              </div>
+              {/* Door-to-Door service card */}
+              <button
+                onClick={toggleD2D}
+                className="relative rounded-2xl p-5 text-start transition-all border-2 bg-white shadow-sm"
+                style={{
+                  borderColor: form.door_to_door ? '#ea580c' : '#f3f4f6',
+                  background: form.door_to_door ? 'rgba(234,88,12,0.04)' : 'white',
+                }}
+              >
+                <div className="flex items-start gap-4">
+                  <div className={`p-3 rounded-xl transition-colors ${
+                    form.door_to_door ? 'bg-brand-100 text-brand-600' : 'bg-gray-100 text-gray-400'
+                  }`}>
+                    <Car size={22} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="font-bold text-gray-800">
+                        {isAr ? 'خدمة من الباب للباب 🚗' : 'Door-to-Door Service 🚗'}
+                      </p>
+                      {/* Toggle visual */}
+                      <div className={`w-11 h-6 rounded-full relative transition-colors ${
+                        form.door_to_door ? 'bg-brand-500' : 'bg-gray-200'
+                      }`}>
+                        <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${
+                          form.door_to_door ? 'start-[22px]' : 'start-0.5'
+                        }`} />
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-500 leading-relaxed">
+                      {isAr
+                        ? 'نستلم سيارتك من أي مكان ونعيدها إليك بعد اكتمال الخدمة — وفّر وقتك بالكامل'
+                        : "We pick up your car from wherever it is and return it to you once the service is complete — save your entire day"}
+                    </p>
+                    {form.door_to_door && (
+                      <p className="text-xs text-brand-600 font-medium mt-2 flex items-center gap-1">
+                        <CheckCircle size={12} />
+                        {isAr ? 'تم تفعيل الخدمة — سنتواصل معك لتحديد موقع الاستلام' : 'Service activated — we will contact you to arrange pickup location'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </button>
 
               {/* Mobile CTA — only visible on mobile */}
               <div className="lg:hidden flex flex-col gap-3">
@@ -417,6 +454,7 @@ export default function BookingPage() {
                       { label: isAr ? 'الوقت' : 'Time', value: summary.time, icon: Clock },
                       { label: isAr ? 'الاسم' : 'Name', value: summary.name, icon: User },
                       { label: isAr ? 'المنطقة' : 'Area', value: summary.area, icon: MapPin },
+                      { label: isAr ? 'من الباب للباب' : 'Door-to-Door', value: form.door_to_door ? (isAr ? '✓ مفعّلة' : '✓ Enabled') : (isAr ? 'غير مفعّلة' : 'Not enabled'), icon: Car },
                     ].map(({ label, value, icon: Icon }) => (
                       <div key={label} className="flex items-start gap-3">
                         <div className="w-7 h-7 bg-gray-50 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
