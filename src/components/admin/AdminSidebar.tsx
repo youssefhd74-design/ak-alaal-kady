@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingBag, Calendar, Settings, LogOut, Wrench, ExternalLink, Search } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, Calendar, Settings, LogOut, Wrench, ExternalLink, Search, HeartPulse } from 'lucide-react';
 
 const navItems = [
   { href: '/admin', label: 'الرئيسية', icon: LayoutDashboard, exact: true },
@@ -10,6 +10,7 @@ const navItems = [
   { href: '/admin/orders', label: 'الطلبات', icon: ShoppingBag },
   { href: '/admin/appointments', label: 'المواعيد', icon: Calendar },
   { href: '/admin/requests', label: 'طلبات المنتجات', icon: Search },
+  { href: '/admin/health-cards', label: 'بطاقات السيارات', icon: HeartPulse },
   { href: '/admin/settings', label: 'الإعدادات', icon: Settings },
 ];
 
