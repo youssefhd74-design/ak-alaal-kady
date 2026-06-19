@@ -94,7 +94,7 @@ export default function BookingPage() {
     service_type: '' as 'maintenance' | 'malfunction' | '',
     customer_name: '', customer_phone: '',
     customer_area: '', customer_address: '',
-    car_model: '', car_year: '',
+    car_model: '', car_model_other: '', car_year: '',
     preferred_date: '', preferred_time: '', notes: '',
     door_to_door: false,
   });
@@ -110,7 +110,7 @@ export default function BookingPage() {
       ? (isAr ? 'تشخيص عطل' : 'Fault Diagnosis')
       : (isAr ? 'لم يتم الاختيار' : 'Not selected'),
     car: form.car_model
-      ? `${form.car_model}${form.car_year ? ` · ${form.car_year}` : ''}`
+      ? `${form.car_model === 'Other' ? (form.car_model_other || '...') : form.car_model}${form.car_year ? ` · ${form.car_year}` : ''}`
       : (isAr ? 'لم يتم الاختيار' : 'Not selected'),
     date: form.preferred_date
       ? new Date(form.preferred_date).toLocaleDateString(isAr ? 'ar-EG' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' })
@@ -120,24 +120,29 @@ export default function BookingPage() {
     area: form.customer_area || (isAr ? '—' : '—'),
   };
 
+  const carModelComplete = form.car_model === 'Other' ? !!form.car_model_other : !!form.car_model;
   const completeness = [
-    form.service_type, form.car_model, form.preferred_date,
+    form.service_type, carModelComplete, form.preferred_date,
     form.customer_name, form.customer_phone, form.customer_area, form.customer_address
   ].filter(Boolean).length;
   const progress = Math.round((completeness / 7) * 100);
 
   async function handleSubmit() {
     const required = ['service_type','customer_name','customer_phone','customer_area','customer_address','car_model','preferred_date'];
-    if (required.some(k => !(form as any)[k])) {
+    if (required.some(k => !(form as any)[k]) || (form.car_model === 'Other' && !form.car_model_other)) {
       toast.error(isAr ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
       return;
     }
     setSubmitting(true);
     try {
+      const payload = {
+        ...form,
+        car_model: form.car_model === 'Other' ? form.car_model_other : form.car_model,
+      };
       const res = await fetch('/api/appointments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -259,13 +264,23 @@ export default function BookingPage() {
                   {isAr ? 'بيانات السيارة' : 'Car Details'}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FloatingSelect
-                    label={isAr ? 'موديل السيارة *' : 'Car Model *'}
-                    value={form.car_model}
-                    onChange={v => set('car_model', v)}
-                    icon={Car}
-                    options={RENAULT_MODELS.map(m => ({ value: m, label: m }))}
-                  />
+                  <div className="flex flex-col gap-2">
+                    <FloatingSelect
+                      label={isAr ? 'موديل السيارة *' : 'Car Model *'}
+                      value={form.car_model}
+                      onChange={v => set('car_model', v)}
+                      icon={Car}
+                      options={RENAULT_MODELS.map(m => ({ value: m, label: m }))}
+                    />
+                    {form.car_model === 'Other' && (
+                      <FloatingInput
+                        label={isAr ? 'اكتب موديل السيارة *' : 'Type your car model *'}
+                        value={form.car_model_other}
+                        onChange={v => set('car_model_other', v)}
+                        icon={Car}
+                      />
+                    )}
+                  </div>
                   <FloatingInput
                     label={isAr ? 'سنة الصنع' : 'Year'}
                     value={form.car_year}

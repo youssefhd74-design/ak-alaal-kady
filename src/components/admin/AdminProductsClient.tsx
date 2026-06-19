@@ -50,8 +50,8 @@ export default function AdminProductsClient({ initialProducts, categories }: Pro
   }
 
   async function handleSave() {
-    if (!form.name_ar || !form.name_en || !form.price) {
-      toast.error('يرجى ملء الحقول المطلوبة');
+    if (!form.name_ar || !form.price) {
+      toast.error('يرجى ملء اسم المنتج والسعر على الأقل');
       return;
     }
     // Check featured limit
@@ -63,7 +63,7 @@ export default function AdminProductsClient({ initialProducts, categories }: Pro
     try {
       const body = {
         name_ar: form.name_ar,
-        name_en: form.name_en,
+        name_en: form.name_en || form.name_ar,
         description_ar: form.description_ar || null,
         description_en: form.description_en || null,
         price: parseFloat(form.price),
@@ -260,12 +260,12 @@ export default function AdminProductsClient({ initialProducts, categories }: Pro
             <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
                 { label: 'الاسم (عربي) *', key: 'name_ar' },
-                { label: 'الاسم (إنجليزي) *', key: 'name_en' },
-                { label: 'الوصف (عربي)', key: 'description_ar', textarea: true },
-                { label: 'الوصف (إنجليزي)', key: 'description_en', textarea: true },
+                { label: 'الاسم (إنجليزي) — اختياري', key: 'name_en' },
+                { label: 'الوصف (عربي) — اختياري', key: 'description_ar', textarea: true },
+                { label: 'الوصف (إنجليزي) — اختياري', key: 'description_en', textarea: true },
                 { label: 'السعر (ج.م) *', key: 'price', type: 'number' },
-                { label: 'الكمية المتاحة', key: 'stock_quantity', type: 'number' },
-                { label: 'رقم القطعة (SKU)', key: 'sku' },
+                { label: 'الكمية المتاحة — اختياري', key: 'stock_quantity', type: 'number' },
+                { label: 'رقم القطعة (SKU) — اختياري', key: 'sku' },
               ].map(({ label, key, textarea, type }) => (
                 <div key={key} className={textarea ? 'sm:col-span-2' : ''}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>

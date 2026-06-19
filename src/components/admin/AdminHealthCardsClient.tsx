@@ -28,12 +28,20 @@ export default function AdminHealthCardsClient({ initialCards }: { initialCards:
       toast.error('يرجى ملء الحقول المطلوبة');
       return;
     }
+    if (cardForm.car_model === 'Other' && !(cardForm as any).car_model_other) {
+      toast.error('يرجى كتابة موديل السيارة');
+      return;
+    }
     setSaving(true);
     try {
+      const payload = {
+        ...cardForm,
+        car_model: cardForm.car_model === 'Other' ? (cardForm as any).car_model_other : cardForm.car_model,
+      };
       const res = await fetch('/api/health-cards', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(cardForm),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error();
@@ -243,6 +251,14 @@ export default function AdminHealthCardsClient({ initialCards }: { initialCards:
                   ))}
                 </select>
               </div>
+              {cardForm.car_model === 'Other' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">اكتب موديل السيارة *</label>
+                  <input type="text" className="input-field" placeholder="مثال: تويوتا كورولا"
+                    value={(cardForm as any).car_model_other || ''}
+                    onChange={e => setCardForm({ ...cardForm, car_model_other: e.target.value } as any)} />
+                </div>
+              )}
             </div>
             <div className="p-5 pt-0 flex gap-3">
               <button onClick={() => setCardModal(false)} className="btn-secondary flex-1">إلغاء</button>

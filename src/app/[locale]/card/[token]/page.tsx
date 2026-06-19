@@ -9,13 +9,13 @@ export default async function CarCardPage({
   const isAr = locale === 'ar';
   const db = createAdminClient();
 
-  const { data: card } = await db
+  const { data: card, error } = await db
     .from('car_cards')
     .select('customer_name, car_model, car_year, plate, created_at, service_records(*)')
     .eq('token', token)
     .single();
 
-  if (!card) notFound();
+  if (!card || error) notFound();
 
   const records = ((card as any).service_records || [])
     .sort((a: any, b: any) => b.service_date.localeCompare(a.service_date));
