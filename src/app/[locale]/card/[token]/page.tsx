@@ -3,19 +3,23 @@ import Navbar from '@/components/shared/Navbar';
 import { Car, Calendar, Gauge, Wrench, Settings2, ShieldCheck, AlertCircle } from 'lucide-react';
 import { notFound } from 'next/navigation';
 
+// Always render fresh — never cache a customer's card
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function CarCardPage({
   params: { locale, token },
 }: { params: { locale: string; token: string } }) {
   const isAr = locale === 'ar';
   const db = createAdminClient();
 
-  const { data: card, error } = await db
+  const { data: card } = await db
     .from('car_cards')
     .select('customer_name, car_model, car_year, plate, created_at, service_records(*)')
     .eq('token', token)
-    .single();
+    .maybeSingle();
 
-  if (!card || error) notFound();
+  if (!card) notFound();
 
   const records = ((card as any).service_records || [])
     .sort((a: any, b: any) => b.service_date.localeCompare(a.service_date));

@@ -46,10 +46,10 @@ export default function Footer() {
                 <Clock size={14} className="text-brand-400 shrink-0" />
                 <span>{locale === 'ar' ? 'السبت - الخميس: 9ص - 6م' : 'Sat - Thu: 9am - 6pm'}</span>
               </div>
-              <div className="flex items-center gap-2">
+              <a href="https://maps.app.goo.gl/WpmJwyryEGuUgZ8w9" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-brand-400 transition-colors">
                 <MapPin size={14} className="text-brand-400 shrink-0" />
-                <span>{locale === 'ar' ? 'القاهرة، مصر' : 'Cairo, Egypt'}</span>
-              </div>
+                <span>{locale === 'ar' ? 'أولاد القاضي، القاهرة — عرض على الخريطة' : 'Awlad El Kady, Cairo — View on map'}</span>
+              </a>
             </div>
           </div>
         </div>

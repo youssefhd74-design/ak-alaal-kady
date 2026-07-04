@@ -5,6 +5,7 @@ import Navbar from '@/components/shared/Navbar';
 import Footer from '@/components/shared/Footer';
 import FeaturedProducts from '@/components/storefront/FeaturedProducts';
 import ProductRequestModal from '@/components/storefront/ProductRequestModal';
+import LocationCard from '@/components/shared/LocationCard';
 import { supabase } from '@/lib/supabase';
 import { Wrench, ShieldCheck, Truck, Star } from 'lucide-react';
 
@@ -100,6 +101,8 @@ export default async function HomePage({ params: { locale } }: { params: { local
           </Link>
         </div>
       </section>
+
+      <LocationCard />
 
       <Footer />
     </div>
