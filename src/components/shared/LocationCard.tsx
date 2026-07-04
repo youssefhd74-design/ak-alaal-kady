@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocale } from 'next-intl';
-import { MapPin, Navigation, Clock, Phone } from 'lucide-react';
+import { MapPin, Navigation, Clock } from 'lucide-react';
 
 const MAPS_LINK = 'https://maps.app.goo.gl/WpmJwyryEGuUgZ8w9';
 const LAT = 29.9872445;
@@ -11,8 +11,8 @@ export default function LocationCard() {
   const locale = useLocale();
   const isAr = locale === 'ar';
 
-  // Static map embed via OpenStreetMap (no API key needed)
-  const embedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${LNG - 0.008}%2C${LAT - 0.005}%2C${LNG + 0.008}%2C${LAT + 0.005}&layer=mapnik&marker=${LAT}%2C${LNG}`;
+  // Non-WebGL classic OSM iframe (raster tiles, works in every browser)
+  const iframeSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${LNG - 0.006}%2C${LAT - 0.004}%2C${LNG + 0.006}%2C${LAT + 0.004}&layer=mapnik&marker=${LAT}%2C${LNG}`;
 
   return (
     <section className="py-14 px-4 bg-white border-t border-gray-100">
@@ -28,16 +28,28 @@ export default function LocationCard() {
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-          {/* Map */}
-          <div className="rounded-2xl overflow-hidden shadow-sm border border-gray-200 min-h-[280px]">
+          {/* Map — clickable, opens Google Maps. Uses raster tiles (no WebGL) */}
+          <a
+            href={MAPS_LINK}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative rounded-2xl overflow-hidden shadow-sm border border-gray-200 min-h-[280px] group block"
+          >
             <iframe
-              src={embedUrl}
-              className="w-full h-full min-h-[280px]"
+              src={iframeSrc}
+              className="w-full h-full min-h-[280px] pointer-events-none"
               style={{ border: 0 }}
               loading="lazy"
               title="AK Location Map"
             />
-          </div>
+            {/* Overlay to make whole map clickable + hint */}
+            <div className="absolute inset-0 flex items-end justify-center pb-4 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className="bg-white text-gray-800 text-sm font-semibold px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
+                <Navigation size={14} className="text-brand-600" />
+                {isAr ? 'افتح في خرائط جوجل' : 'Open in Google Maps'}
+              </span>
+            </div>
+          </a>
 
           {/* Info */}
           <div className="flex flex-col justify-center gap-5">
@@ -69,7 +81,6 @@ export default function LocationCard() {
               </div>
             </div>
 
-            {/* Get directions button */}
             <a
               href={MAPS_LINK}
               target="_blank"
