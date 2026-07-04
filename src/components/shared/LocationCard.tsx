@@ -11,9 +11,6 @@ export default function LocationCard() {
   const locale = useLocale();
   const isAr = locale === 'ar';
 
-  // Non-WebGL classic OSM iframe (raster tiles, works in every browser)
-  const iframeSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${LNG - 0.006}%2C${LAT - 0.004}%2C${LNG + 0.006}%2C${LAT + 0.004}&layer=mapnik&marker=${LAT}%2C${LNG}`;
-
   return (
     <section className="py-14 px-4 bg-white border-t border-gray-100">
       <div className="max-w-5xl mx-auto">
@@ -28,26 +25,56 @@ export default function LocationCard() {
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-          {/* Map — clickable, opens Google Maps. Uses raster tiles (no WebGL) */}
+          {/* Static map card — pure CSS/SVG, cannot fail */}
           <a
             href={MAPS_LINK}
             target="_blank"
             rel="noopener noreferrer"
             className="relative rounded-2xl overflow-hidden shadow-sm border border-gray-200 min-h-[280px] group block"
+            style={{
+              background: 'linear-gradient(135deg, #1a2744 0%, #16213e 100%)',
+            }}
           >
-            <iframe
-              src={iframeSrc}
-              className="w-full h-full min-h-[280px] pointer-events-none"
-              style={{ border: 0 }}
-              loading="lazy"
-              title="AK Location Map"
-            />
-            {/* Overlay to make whole map clickable + hint */}
-            <div className="absolute inset-0 flex items-end justify-center pb-4 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-              <span className="bg-white text-gray-800 text-sm font-semibold px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
-                <Navigation size={14} className="text-brand-600" />
-                {isAr ? 'افتح في خرائط جوجل' : 'Open in Google Maps'}
-              </span>
+            {/* Decorative map grid */}
+            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 280" preserveAspectRatio="xMidYMid slice">
+              {/* Grid lines — like map roads */}
+              {[40, 80, 120, 160, 200, 240].map(y => (
+                <line key={`h${y}`} x1="0" y1={y} x2="400" y2={y} stroke="rgba(148,163,184,0.08)" strokeWidth="1" />
+              ))}
+              {[60, 120, 180, 240, 300, 360].map(x => (
+                <line key={`v${x}`} x1={x} y1="0" x2={x} y2="280" stroke="rgba(148,163,184,0.08)" strokeWidth="1" />
+              ))}
+              {/* Main "roads" */}
+              <line x1="0" y1="140" x2="400" y2="120" stroke="rgba(234,88,12,0.25)" strokeWidth="3" />
+              <line x1="200" y1="0" x2="220" y2="280" stroke="rgba(234,88,12,0.2)" strokeWidth="3" />
+              <line x1="0" y1="200" x2="400" y2="230" stroke="rgba(148,163,184,0.15)" strokeWidth="2" />
+
+              {/* Location pin at center */}
+              <g transform="translate(200, 130)">
+                {/* Pulse rings */}
+                <circle cx="0" cy="0" r="30" fill="rgba(234,88,12,0.1)">
+                  <animate attributeName="r" values="20;40;20" dur="2.5s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.4;0;0.4" dur="2.5s" repeatCount="indefinite" />
+                </circle>
+                {/* Pin */}
+                <path d="M 0 -22 C -12 -22 -20 -13 -20 -2 C -20 10 0 22 0 22 C 0 22 20 10 20 -2 C 20 -13 12 -22 0 -22 Z"
+                  fill="#ea580c" stroke="#fff" strokeWidth="2" />
+                <circle cx="0" cy="-2" r="7" fill="#fff" />
+              </g>
+            </svg>
+
+            {/* Label overlay */}
+            <div className="absolute inset-0 flex flex-col items-center justify-end pb-6">
+              <div className="bg-white/95 backdrop-blur px-5 py-3 rounded-xl shadow-lg text-center">
+                <p className="font-bold text-gray-800 text-sm flex items-center gap-1.5 justify-center">
+                  <MapPin size={14} className="text-brand-600" />
+                  {isAr ? 'أولاد القاضي' : 'Awlad El Kady'}
+                </p>
+                <p className="text-xs text-brand-600 font-medium mt-1 flex items-center gap-1 justify-center">
+                  <Navigation size={11} />
+                  {isAr ? 'اضغط لفتح الخريطة' : 'Tap to open map'}
+                </p>
+              </div>
             </div>
           </a>
 
