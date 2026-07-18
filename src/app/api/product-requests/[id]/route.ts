@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase';
+import { requireAdminApi } from '../../../../lib/require-admin-api';
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+  const denied = requireAdminApi();
+  if (denied) return denied;
   const body = await request.json();
   const db = createAdminClient();
   const { data, error } = await db.from('product_requests').update(body).eq('id', params.id).select().single();

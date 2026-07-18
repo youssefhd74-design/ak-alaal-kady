@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase';
+import { requireAdminApi } from '../../../lib/require-admin-api';
 
 export async function GET() {
   const db = createAdminClient();
@@ -12,6 +13,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const denied = requireAdminApi();
+  if (denied) return denied;
   const body = await request.json();
   const db = createAdminClient();
   const { data, error } = await db.from('car_cards').insert({

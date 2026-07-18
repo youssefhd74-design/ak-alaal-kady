@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient, supabase } from '@/lib/supabase';
+import { requireAdminApi } from '../../../lib/require-admin-api';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -13,6 +14,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const denied = requireAdminApi();
+  if (denied) return denied;
   const body = await request.json();
   const db = createAdminClient();
   const upserts = Object.entries(body).map(([key, value]) => ({ key, value: String(value) }));
