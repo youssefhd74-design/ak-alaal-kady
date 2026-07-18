@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, X, Check, Car, Link2, MessageCircle, FileText, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, X, Check, Car, Link2, MessageCircle, FileText, Trash2, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { toWhatsAppNumber } from '@/lib/phone';
 
-const emptyCard = { customer_name: '', customer_phone: '', car_model: '', car_year: '', plate: '' };
+const CAR_MODELS = ['Clio','Logan','Duster','Symbol','Megane','Sandero','Fluence','Koleos','Kadjar','Captur','Talisman','Other'];
+const emptyCard = { customer_name: '', customer_phone: '', car_model: '', car_model_other: '', car_year: '', plate: '' };
 const emptyRecord = {
   service_date: new Date().toISOString().split('T')[0],
   odometer_km: '', services_performed: '', parts_replaced: '',
@@ -14,41 +16,75 @@ const emptyRecord = {
 export default function AdminHealthCardsClient({ initialCards }: { initialCards: any[] }) {
   const [cards, setCards] = useState(initialCards);
   const [cardModal, setCardModal] = useState(false);
-  const [recordModal, setRecordModal] = useState<string | null>(null); // card id
+  const [editingCard, setEditingCard] = useState<any>(null);
+  const [recordModal, setRecordModal] = useState<string | null>(null);
+  const [editingRecord, setEditingRecord] = useState<any>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [cardForm, setCardForm] = useState(emptyCard);
   const [recordForm, setRecordForm] = useState(emptyRecord);
   const [saving, setSaving] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteCardId, setDeleteCardId] = useState<string | null>(null);
+  const [deleteRecordId, setDeleteRecordId] = useState<{ cardId: string; recordId: string } | null>(null);
 
   const appUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
-  async function createCard() {
+  // ---------- CARD CREATE / EDIT ----------
+  function openNewCard() {
+    setEditingCard(null);
+    setCardForm(emptyCard);
+    setCardModal(true);
+  }
+
+  function openEditCard(card: any) {
+    setEditingCard(card);
+    const isKnownModel = CAR_MODELS.includes(card.car_model);
+    setCardForm({
+      customer_name: card.customer_name,
+      customer_phone: card.customer_phone,
+      car_model: isKnownModel ? card.car_model : 'Other',
+      car_model_other: isKnownModel ? '' : card.car_model,
+      car_year: card.car_year || '',
+      plate: card.plate || '',
+    });
+    setCardModal(true);
+  }
+
+  async function saveCard() {
     if (!cardForm.customer_name || !cardForm.customer_phone || !cardForm.car_model) {
       toast.error('يرجى ملء الحقول المطلوبة');
       return;
     }
-    if (cardForm.car_model === 'Other' && !(cardForm as any).car_model_other) {
+    if (cardForm.car_model === 'Other' && !cardForm.car_model_other) {
       toast.error('يرجى كتابة موديل السيارة');
       return;
     }
     setSaving(true);
     try {
       const payload = {
-        ...cardForm,
-        car_model: cardForm.car_model === 'Other' ? (cardForm as any).car_model_other : cardForm.car_model,
+        customer_name: cardForm.customer_name,
+        customer_phone: cardForm.customer_phone,
+        car_model: cardForm.car_model === 'Other' ? cardForm.car_model_other : cardForm.car_model,
+        car_year: cardForm.car_year || null,
+        plate: cardForm.plate || null,
       };
-      const res = await fetch('/api/health-cards', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error();
-      setCards(prev => [{ ...data, service_records: [] }, ...prev]);
+      if (editingCard) {
+        const res = await fetch(`/api/health-cards/${editingCard.id}`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error();
+        setCards(prev => prev.map(c => c.id === editingCard.id ? { ...c, ...data } : c));
+        toast.success('تم تحديث البطاقة');
+      } else {
+        const res = await fetch('/api/health-cards', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error();
+        setCards(prev => [{ ...data, service_records: [] }, ...prev]);
+        toast.success('تم إنشاء البطاقة');
+      }
       setCardModal(false);
-      setCardForm(emptyCard);
-      toast.success('تم إنشاء بطاقة السيارة');
     } catch {
       toast.error('حدث خطأ');
     } finally {
@@ -56,26 +92,56 @@ export default function AdminHealthCardsClient({ initialCards }: { initialCards:
     }
   }
 
-  async function addRecord() {
+  // ---------- RECORD CREATE / EDIT ----------
+  function openNewRecord(cardId: string) {
+    setEditingRecord(null);
+    setRecordForm(emptyRecord);
+    setRecordModal(cardId);
+  }
+
+  function openEditRecord(cardId: string, rec: any) {
+    setEditingRecord(rec);
+    setRecordForm({
+      service_date: rec.service_date,
+      odometer_km: rec.odometer_km ? String(rec.odometer_km) : '',
+      services_performed: rec.services_performed,
+      parts_replaced: rec.parts_replaced || '',
+      next_service_date: rec.next_service_date || '',
+      next_service_note: rec.next_service_note || '',
+      notes: rec.notes || '',
+    });
+    setRecordModal(cardId);
+  }
+
+  async function saveRecord() {
     if (!recordForm.services_performed || !recordForm.service_date) {
       toast.error('يرجى إدخال تاريخ الخدمة والأعمال المنفذة');
       return;
     }
     setSaving(true);
     try {
-      const res = await fetch(`/api/health-cards/${recordModal}/records`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(recordForm),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error();
-      setCards(prev => prev.map(c => c.id === recordModal
-        ? { ...c, service_records: [data, ...(c.service_records || [])] }
-        : c));
+      if (editingRecord) {
+        const res = await fetch(`/api/service-records/${editingRecord.id}`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(recordForm),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error();
+        setCards(prev => prev.map(c => c.id === recordModal
+          ? { ...c, service_records: (c.service_records || []).map((r: any) => r.id === editingRecord.id ? data : r) }
+          : c));
+        toast.success('تم تحديث السجل');
+      } else {
+        const res = await fetch(`/api/health-cards/${recordModal}/records`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(recordForm),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error();
+        setCards(prev => prev.map(c => c.id === recordModal
+          ? { ...c, service_records: [data, ...(c.service_records || [])] }
+          : c));
+        toast.success('تم إضافة السجل');
+      }
       setRecordModal(null);
-      setRecordForm(emptyRecord);
-      toast.success('تم إضافة سجل الخدمة');
     } catch {
       toast.error('حدث خطأ');
     } finally {
@@ -88,8 +154,22 @@ export default function AdminHealthCardsClient({ initialCards }: { initialCards:
       const res = await fetch(`/api/health-cards/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
       setCards(prev => prev.filter(c => c.id !== id));
-      setDeleteId(null);
+      setDeleteCardId(null);
       toast.success('تم حذف البطاقة');
+    } catch {
+      toast.error('حدث خطأ');
+    }
+  }
+
+  async function deleteRecord(cardId: string, recordId: string) {
+    try {
+      const res = await fetch(`/api/service-records/${recordId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      setCards(prev => prev.map(c => c.id === cardId
+        ? { ...c, service_records: (c.service_records || []).filter((r: any) => r.id !== recordId) }
+        : c));
+      setDeleteRecordId(null);
+      toast.success('تم حذف السجل');
     } catch {
       toast.error('حدث خطأ');
     }
@@ -103,7 +183,7 @@ export default function AdminHealthCardsClient({ initialCards }: { initialCards:
   function shareWhatsApp(card: any) {
     const link = `${appUrl}/ar/card/${card.token}`;
     const msg = `مرحباً ${card.customer_name} 👋\n\nهذه بطاقة صحة سيارتك ${card.car_model} من AK - علاء القاضي.\nستجد فيها كل سجل الصيانة وموعد الخدمة القادمة:\n\n${link}\n\nاحتفظ بالرابط للرجوع إليه في أي وقت 🚗`;
-    window.open(`https://wa.me/2${card.customer_phone.replace(/^0/, '')}?text=${encodeURIComponent(msg)}`, '_blank');
+    window.open(`https://wa.me/${toWhatsAppNumber(card.customer_phone)}?text=${encodeURIComponent(msg)}`, '_blank');
   }
 
   return (
@@ -113,13 +193,11 @@ export default function AdminHealthCardsClient({ initialCards }: { initialCards:
           <h1 className="text-2xl font-bold text-gray-800">بطاقات صحة السيارات</h1>
           <p className="text-sm text-gray-400 mt-0.5">{cards.length} بطاقة · سجل صيانة دائم لكل عميل</p>
         </div>
-        <button onClick={() => setCardModal(true)} className="btn-primary flex items-center gap-2">
-          <Plus size={18} />
-          بطاقة جديدة
+        <button onClick={openNewCard} className="btn-primary flex items-center gap-2">
+          <Plus size={18} /> بطاقة جديدة
         </button>
       </div>
 
-      {/* Cards list */}
       <div className="flex flex-col gap-3">
         {cards.map(card => {
           const records = card.service_records || [];
@@ -128,9 +206,7 @@ export default function AdminHealthCardsClient({ initialCards }: { initialCards:
           const isOpen = expanded === card.id;
           return (
             <div key={card.id} className="card overflow-hidden">
-              {/* Card header */}
-              <div className="flex items-center gap-4 p-4 cursor-pointer hover:bg-gray-50"
-                onClick={() => setExpanded(isOpen ? null : card.id)}>
+              <div className="flex items-center gap-4 p-4 cursor-pointer hover:bg-gray-50" onClick={() => setExpanded(isOpen ? null : card.id)}>
                 <div className="w-11 h-11 bg-gray-900 rounded-xl flex items-center justify-center shrink-0">
                   <Car size={20} className="text-brand-500" />
                 </div>
@@ -141,61 +217,62 @@ export default function AdminHealthCardsClient({ initialCards }: { initialCards:
                 <div className="text-end shrink-0 hidden sm:block">
                   <p className="text-xs text-gray-400">{records.length} سجل خدمة</p>
                   {lastRecord?.next_service_date && (
-                    <p className="text-xs font-medium text-brand-600">
-                      القادمة: {new Date(lastRecord.next_service_date).toLocaleDateString('ar-EG')}
-                    </p>
+                    <p className="text-xs font-medium text-brand-600">القادمة: {new Date(lastRecord.next_service_date).toLocaleDateString('ar-EG')}</p>
                   )}
                 </div>
                 {isOpen ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
               </div>
 
-              {/* Expanded */}
               {isOpen && (
                 <div className="border-t bg-gray-50/50 p-4">
-                  {/* Actions */}
                   <div className="flex flex-wrap gap-2 mb-4">
-                    <button onClick={() => { setRecordModal(card.id); setRecordForm(emptyRecord); }}
-                      className="btn-primary text-sm py-2 px-4 flex items-center gap-1.5">
-                      <Plus size={14} /> إضافة سجل خدمة
+                    <button onClick={() => openNewRecord(card.id)} className="btn-primary text-sm py-2 px-4 flex items-center gap-1.5">
+                      <Plus size={14} /> إضافة سجل
                     </button>
-                    <button onClick={() => copyLink(card.token)}
-                      className="text-sm py-2 px-4 rounded-lg border border-gray-300 text-gray-600 hover:bg-white flex items-center gap-1.5">
+                    <button onClick={() => openEditCard(card)} className="text-sm py-2 px-4 rounded-lg border border-gray-300 text-gray-600 hover:bg-white flex items-center gap-1.5">
+                      <Pencil size={14} /> تعديل البيانات
+                    </button>
+                    <button onClick={() => copyLink(card.token)} className="text-sm py-2 px-4 rounded-lg border border-gray-300 text-gray-600 hover:bg-white flex items-center gap-1.5">
                       <Link2 size={14} /> نسخ الرابط
                     </button>
-                    <button onClick={() => shareWhatsApp(card)}
-                      className="text-sm py-2 px-4 rounded-lg bg-green-500 text-white hover:bg-green-600 flex items-center gap-1.5">
-                      <MessageCircle size={14} /> إرسال واتساب
+                    <button onClick={() => shareWhatsApp(card)} className="text-sm py-2 px-4 rounded-lg bg-green-500 text-white hover:bg-green-600 flex items-center gap-1.5">
+                      <MessageCircle size={14} /> واتساب
                     </button>
-                    <button onClick={() => setDeleteId(card.id)}
-                      className="text-sm py-2 px-3 rounded-lg text-red-500 hover:bg-red-50 flex items-center gap-1.5 ms-auto">
+                    <button onClick={() => setDeleteCardId(card.id)} className="text-sm py-2 px-3 rounded-lg text-red-500 hover:bg-red-50 flex items-center gap-1.5 ms-auto">
                       <Trash2 size={14} />
                     </button>
                   </div>
 
-                  {/* Records timeline */}
                   {sorted.length === 0 ? (
                     <p className="text-center text-gray-400 text-sm py-6">
                       <FileText size={24} className="mx-auto mb-2 opacity-30" />
-                      لا توجد سجلات بعد — أضف أول سجل خدمة
+                      لا توجد سجلات بعد
                     </p>
                   ) : (
                     <div className="flex flex-col gap-2">
                       {sorted.map((rec: any) => (
-                        <div key={rec.id} className="bg-white rounded-xl p-4 border border-gray-100">
+                        <div key={rec.id} className="bg-white rounded-xl p-4 border border-gray-100 group">
                           <div className="flex items-center justify-between mb-2">
                             <p className="font-bold text-gray-800 text-sm">
                               {new Date(rec.service_date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}
                             </p>
-                            {rec.odometer_km && (
-                              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-mono">
-                                {rec.odometer_km.toLocaleString()} كم
-                              </span>
-                            )}
+                            <div className="flex items-center gap-2">
+                              {rec.odometer_km && (
+                                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-mono">
+                                  {rec.odometer_km.toLocaleString()} كم
+                                </span>
+                              )}
+                              {/* Edit / delete record */}
+                              <button onClick={() => openEditRecord(card.id, rec)} className="p-1 text-blue-600 hover:bg-blue-50 rounded">
+                                <Pencil size={13} />
+                              </button>
+                              <button onClick={() => setDeleteRecordId({ cardId: card.id, recordId: rec.id })} className="p-1 text-red-500 hover:bg-red-50 rounded">
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
                           </div>
                           <p className="text-sm text-gray-700 mb-1">🔧 {rec.services_performed}</p>
-                          {rec.parts_replaced && (
-                            <p className="text-sm text-gray-500 mb-1">⚙️ قطع مستبدلة: {rec.parts_replaced}</p>
-                          )}
+                          {rec.parts_replaced && <p className="text-sm text-gray-500 mb-1">⚙️ قطع مستبدلة: {rec.parts_replaced}</p>}
                           {rec.next_service_date && (
                             <p className="text-xs text-brand-600 font-medium mt-2">
                               📅 الخدمة القادمة: {new Date(rec.next_service_date).toLocaleDateString('ar-EG')}
@@ -215,17 +292,16 @@ export default function AdminHealthCardsClient({ initialCards }: { initialCards:
           <div className="card p-12 text-center text-gray-400">
             <Car size={36} className="mx-auto mb-3 opacity-30" />
             <p className="font-medium">لا توجد بطاقات بعد</p>
-            <p className="text-sm mt-1">أنشئ بطاقة لكل سيارة عميل لبناء سجل صيانة دائم</p>
           </div>
         )}
       </div>
 
-      {/* New card modal */}
+      {/* CARD MODAL */}
       {cardModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-5 border-b">
-              <h2 className="font-bold text-lg">بطاقة سيارة جديدة</h2>
+              <h2 className="font-bold text-lg">{editingCard ? 'تعديل بيانات البطاقة' : 'بطاقة سيارة جديدة'}</h2>
               <button onClick={() => setCardModal(false)}><X size={20} /></button>
             </div>
             <div className="p-5 flex flex-col gap-4">
@@ -246,36 +322,34 @@ export default function AdminHealthCardsClient({ initialCards }: { initialCards:
                 <select className="input-field" value={cardForm.car_model}
                   onChange={e => setCardForm({ ...cardForm, car_model: e.target.value })}>
                   <option value="">اختر الموديل</option>
-                  {['Clio','Logan','Duster','Symbol','Megane','Sandero','Fluence','Koleos','Kadjar','Captur','Talisman','Other'].map(m => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
+                  {CAR_MODELS.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
               {cardForm.car_model === 'Other' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">اكتب موديل السيارة *</label>
                   <input type="text" className="input-field" placeholder="مثال: تويوتا كورولا"
-                    value={(cardForm as any).car_model_other || ''}
-                    onChange={e => setCardForm({ ...cardForm, car_model_other: e.target.value } as any)} />
+                    value={cardForm.car_model_other}
+                    onChange={e => setCardForm({ ...cardForm, car_model_other: e.target.value })} />
                 </div>
               )}
             </div>
             <div className="p-5 pt-0 flex gap-3">
               <button onClick={() => setCardModal(false)} className="btn-secondary flex-1">إلغاء</button>
-              <button onClick={createCard} disabled={saving} className="btn-primary flex-1 flex items-center justify-center gap-2">
-                <Check size={16} /> {saving ? 'جاري الإنشاء...' : 'إنشاء'}
+              <button onClick={saveCard} disabled={saving} className="btn-primary flex-1 flex items-center justify-center gap-2">
+                <Check size={16} /> {saving ? 'جاري الحفظ...' : 'حفظ'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* New record modal */}
+      {/* RECORD MODAL */}
       {recordModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-5 border-b">
-              <h2 className="font-bold text-lg">سجل خدمة جديد</h2>
+              <h2 className="font-bold text-lg">{editingRecord ? 'تعديل سجل الخدمة' : 'سجل خدمة جديد'}</h2>
               <button onClick={() => setRecordModal(null)}><X size={20} /></button>
             </div>
             <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -291,14 +365,13 @@ export default function AdminHealthCardsClient({ initialCards }: { initialCards:
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">الأعمال المنفذة *</label>
-                <textarea className="input-field resize-none" rows={2}
-                  placeholder="تغيير زيت المحرك، فلتر زيت، فحص الفرامل..."
+                <textarea className="input-field resize-none" rows={2} placeholder="تغيير زيت المحرك، فلتر زيت..."
                   value={recordForm.services_performed}
                   onChange={e => setRecordForm({ ...recordForm, services_performed: e.target.value })} />
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">القطع المستبدلة</label>
-                <input type="text" className="input-field" placeholder="فلتر زيت، تيل فرامل أمامي"
+                <input type="text" className="input-field" placeholder="فلتر زيت، تيل فرامل"
                   value={recordForm.parts_replaced}
                   onChange={e => setRecordForm({ ...recordForm, parts_replaced: e.target.value })} />
               </div>
@@ -313,16 +386,10 @@ export default function AdminHealthCardsClient({ initialCards }: { initialCards:
                   value={recordForm.next_service_note}
                   onChange={e => setRecordForm({ ...recordForm, next_service_note: e.target.value })} />
               </div>
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">ملاحظات داخلية</label>
-                <textarea className="input-field resize-none" rows={2}
-                  value={recordForm.notes}
-                  onChange={e => setRecordForm({ ...recordForm, notes: e.target.value })} />
-              </div>
             </div>
             <div className="p-5 pt-0 flex gap-3">
               <button onClick={() => setRecordModal(null)} className="btn-secondary flex-1">إلغاء</button>
-              <button onClick={addRecord} disabled={saving} className="btn-primary flex-1 flex items-center justify-center gap-2">
+              <button onClick={saveRecord} disabled={saving} className="btn-primary flex-1 flex items-center justify-center gap-2">
                 <Check size={16} /> {saving ? 'جاري الحفظ...' : 'حفظ السجل'}
               </button>
             </div>
@@ -330,16 +397,31 @@ export default function AdminHealthCardsClient({ initialCards }: { initialCards:
         </div>
       )}
 
-      {/* Delete confirm */}
-      {deleteId && (
+      {/* DELETE CARD */}
+      {deleteCardId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl text-center">
             <Trash2 size={40} className="text-red-500 mx-auto mb-3" />
             <h3 className="font-bold text-gray-800 mb-2">حذف البطاقة وكل سجلاتها؟</h3>
             <p className="text-gray-500 text-sm mb-5">سيتوقف رابط العميل عن العمل. لا يمكن التراجع.</p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteId(null)} className="btn-secondary flex-1">إلغاء</button>
-              <button onClick={() => deleteCard(deleteId)} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2.5 rounded-lg">حذف</button>
+              <button onClick={() => setDeleteCardId(null)} className="btn-secondary flex-1">إلغاء</button>
+              <button onClick={() => deleteCard(deleteCardId)} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2.5 rounded-lg">حذف</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE RECORD */}
+      {deleteRecordId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl text-center">
+            <Trash2 size={40} className="text-red-500 mx-auto mb-3" />
+            <h3 className="font-bold text-gray-800 mb-2">حذف هذا السجل؟</h3>
+            <p className="text-gray-500 text-sm mb-5">سيُحذف سجل الخدمة نهائياً من البطاقة.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteRecordId(null)} className="btn-secondary flex-1">إلغاء</button>
+              <button onClick={() => deleteRecord(deleteRecordId.cardId, deleteRecordId.recordId)} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2.5 rounded-lg">حذف</button>
             </div>
           </div>
         </div>

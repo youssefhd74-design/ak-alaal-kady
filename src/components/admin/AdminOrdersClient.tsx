@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, Eye, X } from 'lucide-react';
-
+import { ChevronDown, Eye, X, Trash2, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { toWhatsAppNumber, toDisplayPhone } from '@/lib/phone';
 
 const STATUSES = [
   { value: 'pending', label: 'معلق', cls: 'badge-pending' },
@@ -16,6 +16,7 @@ export default function AdminOrdersClient({ initialOrders }: { initialOrders: an
   const [orders, setOrders] = useState(initialOrders);
   const [filter, setFilter] = useState('');
   const [viewOrder, setViewOrder] = useState<any>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const filtered = filter ? orders.filter((o) => o.status === filter) : orders;
 
@@ -32,6 +33,19 @@ export default function AdminOrdersClient({ initialOrders }: { initialOrders: an
       toast.success('تم تحديث الحالة');
     } catch {
       toast.error('حدث خطأ');
+    }
+  }
+
+  async function deleteOrder(id: string) {
+    try {
+      const res = await fetch(`/api/orders/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      setOrders((prev) => prev.filter((o) => o.id !== id));
+      setDeleteId(null);
+      setViewOrder(null);
+      toast.success('تم حذف الطلب نهائياً');
+    } catch {
+      toast.error('حدث خطأ عند الحذف');
     }
   }
 
@@ -67,7 +81,11 @@ export default function AdminOrdersClient({ initialOrders }: { initialOrders: an
                 <tr key={order.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-mono text-xs text-gray-500">{order.id.split('-')[0].toUpperCase()}</td>
                   <td className="px-4 py-3 font-medium text-gray-800">{order.customer_name}</td>
-                  <td className="px-4 py-3 text-gray-500">{order.customer_phone}</td>
+                  <td className="px-4 py-3">
+                    <a href={`https://wa.me/${toWhatsAppNumber(order.customer_phone)}`} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:underline flex items-center gap-1">
+                      <Phone size={12} />{toDisplayPhone(order.customer_phone)}
+                    </a>
+                  </td>
                   <td className="px-4 py-3 text-gray-500">{order.customer_area}</td>
                   <td className="px-4 py-3 font-bold text-brand-600">{order.total_price.toLocaleString()} ج.م</td>
                   <td className="px-4 py-3 text-gray-400 text-xs">{new Date(order.created_at).toLocaleDateString('ar-EG')}</td>
@@ -90,6 +108,9 @@ export default function AdminOrdersClient({ initialOrders }: { initialOrders: an
                           {STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
                         </select>
                       </div>
+                      <button onClick={() => setDeleteId(order.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg">
+                        <Trash2 size={15} />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -116,7 +137,6 @@ export default function AdminOrdersClient({ initialOrders }: { initialOrders: an
                   { label: 'رقم الطلب', value: viewOrder.id.split('-')[0].toUpperCase() },
                   { label: 'الحالة', value: statusMap[viewOrder.status]?.label },
                   { label: 'العميل', value: viewOrder.customer_name },
-                  { label: 'الهاتف', value: viewOrder.customer_phone },
                   { label: 'المنطقة', value: viewOrder.customer_area },
                   { label: 'العنوان', value: viewOrder.customer_address },
                   { label: 'التاريخ', value: new Date(viewOrder.created_at).toLocaleString('ar-EG') },
@@ -153,6 +173,33 @@ export default function AdminOrdersClient({ initialOrders }: { initialOrders: an
                   <p>{viewOrder.notes}</p>
                 </div>
               )}
+
+              {/* Clickable WhatsApp phone */}
+              <a href={`https://wa.me/${toWhatsAppNumber(viewOrder.customer_phone)}`} target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-medium py-2.5 rounded-lg transition-colors text-sm">
+                <Phone size={15} /> {toDisplayPhone(viewOrder.customer_phone)}
+              </a>
+
+              {/* Delete order */}
+              <button onClick={() => setDeleteId(viewOrder.id)}
+                className="flex items-center justify-center gap-2 border border-red-200 text-red-600 hover:bg-red-50 font-medium py-2.5 rounded-lg transition-colors text-sm">
+                <Trash2 size={15} /> حذف الطلب نهائياً
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirm */}
+      {deleteId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl text-center">
+            <Trash2 size={40} className="text-red-500 mx-auto mb-3" />
+            <h3 className="font-bold text-gray-800 mb-2">حذف الطلب نهائياً؟</h3>
+            <p className="text-gray-500 text-sm mb-5">سيُحذف الطلب بالكامل من قاعدة البيانات ولا يمكن استرجاعه.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteId(null)} className="btn-secondary flex-1">إلغاء</button>
+              <button onClick={() => deleteOrder(deleteId)} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2.5 rounded-lg">حذف</button>
             </div>
           </div>
         </div>
