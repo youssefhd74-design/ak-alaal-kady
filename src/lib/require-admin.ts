@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getSessionUser, hasPerm, PermKey, SessionUser } from '@/lib/session';
+import { getSessionUser, hasPerm, isSuperadmin, PermKey, SessionUser } from '@/lib/session';
 
 /**
  * Page guard for admin pages.
@@ -14,10 +14,10 @@ export async function requireAdmin(perm?: PermKey): Promise<SessionUser> {
   return user;
 }
 
-/** Owner-only pages (user management) */
-export async function requireOwner(): Promise<SessionUser> {
+/** User-management pages: owner or superadmin */
+export async function requireUserManager(): Promise<SessionUser> {
   const user = await getSessionUser();
   if (!user) redirect('/admin-login');
-  if (user.role !== 'owner') redirect('/admin');
+  if (!isSuperadmin(user)) redirect('/admin');
   return user;
 }

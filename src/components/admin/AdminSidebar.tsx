@@ -39,7 +39,7 @@ function SidebarContent({ me, onClose }: { me: Me | null; onClose?: () => void }
   }
 
   const visibleNav = NAV.filter(item =>
-    !item.perm || me?.role === 'owner' || me?.permissions?.[item.perm]
+    !item.perm || me?.role === 'owner' || me?.permissions?.superadmin || me?.permissions?.[item.perm]
   );
 
   return (
@@ -81,8 +81,8 @@ function SidebarContent({ me, onClose }: { me: Me | null; onClose?: () => void }
             </Link>
           ))}
 
-          {/* Owner-only: user management */}
-          {me?.role === 'owner' && (
+          {/* Owner or superadmin: user management */}
+          {(me?.role === 'owner' || me?.permissions?.superadmin) && (
             <Link
               href="/admin/users"
               onClick={onClose}

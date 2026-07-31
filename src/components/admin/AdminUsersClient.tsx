@@ -18,7 +18,9 @@ const emptyUser = {
   permissions: { products: true, orders: true, appointments: true, requests: true, health_cards: true, settings: false, can_delete: false } as Record<string, boolean>,
 };
 
-export default function AdminUsersClient({ initialUsers }: { initialUsers: any[] }) {
+interface Viewer { id: string; role: 'owner' | 'staff'; superadmin: boolean }
+
+export default function AdminUsersClient({ initialUsers, viewer }: { initialUsers: any[]; viewer: Viewer }) {
   const [users, setUsers] = useState(initialUsers);
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState(emptyUser);
@@ -85,7 +87,7 @@ export default function AdminUsersClient({ initialUsers }: { initialUsers: any[]
             <Shield size={22} className="text-brand-600" />
             صلاحيات المستخدمين
           </h1>
-          <p className="text-sm text-gray-400 mt-0.5">{users.length} حساب · حدد لكل مستخدم الأقسام المسموح بها</p>
+          <p className="text-sm text-gray-400 mt-0.5">{users.length} حساب · حدد لكل مستخدم الأقسام المسموح بها{viewer.role !== 'owner' ? ' · (مشرف عام)' : ''}</p>
         </div>
         <button onClick={() => { setForm(emptyUser); setModal(true); }} className="btn-primary flex items-center gap-2">
           <Plus size={18} /> حساب جديد
@@ -95,24 +97,28 @@ export default function AdminUsersClient({ initialUsers }: { initialUsers: any[]
       <div className="flex flex-col gap-4">
         {users.map(user => {
           const isOwner = user.role === 'owner';
+          const isSuper = !!user.permissions?.superadmin;
+          // Superadmins can manage plain staff only; owner manages everyone (except own destructive ops)
+          const canManage = viewer.role === 'owner' ? !isOwner : (!isOwner && !isSuper);
           return (
             <div key={user.id} className={`card p-5 ${!user.is_active ? 'opacity-60' : ''}`}>
               <div className="flex items-start justify-between flex-wrap gap-3 mb-4">
                 <div className="flex items-center gap-3">
-                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${isOwner ? 'bg-brand-600' : 'bg-gray-900'}`}>
-                    {isOwner ? <Crown size={20} className="text-white" /> : <Shield size={18} className="text-gray-300" />}
+                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${isOwner ? 'bg-brand-600' : isSuper ? 'bg-purple-600' : 'bg-gray-900'}`}>
+                    {isOwner ? <Crown size={20} className="text-white" /> : <Shield size={18} className={isSuper ? 'text-white' : 'text-gray-300'} />}
                   </div>
                   <div>
                     <p className="font-bold text-gray-800 flex items-center gap-2">
                       {user.display_name}
                       {isOwner && <span className="text-xs bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full font-medium">المالك</span>}
+                      {!isOwner && isSuper && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">مشرف عام</span>}
                       {!user.is_active && <span className="text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full font-medium">موقوف</span>}
                     </p>
                     <p className="text-sm text-gray-400" dir="ltr">{user.email}</p>
                   </div>
                 </div>
 
-                {!isOwner && (
+                {canManage && (
                   <div className="flex items-center gap-2">
                     <button onClick={() => { setResetFor(user); setNewPass(''); }}
                       className="text-xs py-1.5 px-3 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 flex items-center gap-1">
@@ -133,22 +139,39 @@ export default function AdminUsersClient({ initialUsers }: { initialUsers: any[]
               {/* Permission checkboxes */}
               {isOwner ? (
                 <p className="text-sm text-gray-400">صلاحية كاملة على كل الأقسام</p>
+              ) : isSuper && viewer.role !== 'owner' ? (
+                <p className="text-sm text-purple-500">مشرف عام — يديره المالك فقط</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
-                  {TABS.map(tab => {
-                    const on = !!user.permissions?.[tab.key];
-                    return (
-                      <button key={tab.key} onClick={() => togglePerm(user, tab.key)}
-                        className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${on ? 'bg-brand-50 text-brand-700 border-brand-300' : 'bg-gray-50 text-gray-400 border-gray-200'}`}>
-                        {on ? '✓ ' : ''}{tab.label}
+                  {isSuper ? (
+                    <span className="text-xs text-purple-500 py-1.5">صلاحية كاملة على كل الأقسام (مشرف عام)</span>
+                  ) : (
+                    <>
+                      {TABS.map(tab => {
+                        const on = !!user.permissions?.[tab.key];
+                        return (
+                          <button key={tab.key} onClick={() => canManage && togglePerm(user, tab.key)}
+                            disabled={!canManage}
+                            className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${on ? 'bg-brand-50 text-brand-700 border-brand-300' : 'bg-gray-50 text-gray-400 border-gray-200'} ${!canManage ? 'cursor-not-allowed' : ''}`}>
+                            {on ? '✓ ' : ''}{tab.label}
+                          </button>
+                        );
+                      })}
+                      {/* Delete right — distinct color */}
+                      <button onClick={() => canManage && togglePerm(user, 'can_delete')}
+                        disabled={!canManage}
+                        className={`text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${user.permissions?.can_delete ? 'bg-red-50 text-red-600 border-red-300' : 'bg-gray-50 text-gray-400 border-gray-200'} ${!canManage ? 'cursor-not-allowed' : ''}`}>
+                        {user.permissions?.can_delete ? '✓ ' : ''}صلاحية الحذف
                       </button>
-                    );
-                  })}
-                  {/* Delete right — distinct color */}
-                  <button onClick={() => togglePerm(user, 'can_delete')}
-                    className={`text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${user.permissions?.can_delete ? 'bg-red-50 text-red-600 border-red-300' : 'bg-gray-50 text-gray-400 border-gray-200'}`}>
-                    {user.permissions?.can_delete ? '✓ ' : ''}صلاحية الحذف
-                  </button>
+                    </>
+                  )}
+                  {/* Superadmin tick — ONLY the owner sees and controls this */}
+                  {viewer.role === 'owner' && (
+                    <button onClick={() => togglePerm(user, 'superadmin')}
+                      className={`text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${isSuper ? 'bg-purple-50 text-purple-700 border-purple-300' : 'bg-gray-50 text-gray-400 border-gray-200'}`}>
+                      {isSuper ? '✓ ' : ''}مشرف عام (إدارة المستخدمين)
+                    </button>
+                  )}
                 </div>
               )}
             </div>

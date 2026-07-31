@@ -68,14 +68,20 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   return user as SessionUser;
 }
 
-/** Does this user have a given tab permission? Owner always yes. */
+/** Does this user have a given tab permission? Owner and superadmins always yes. */
 export function hasPerm(user: SessionUser, perm: PermKey): boolean {
-  if (user.role === 'owner') return true;
+  if (user.role === 'owner' || user.permissions?.superadmin) return true;
   return !!user.permissions?.[perm];
 }
 
-/** Can this user delete? Owner always yes. */
+/** Can this user delete? Owner and superadmins always yes. */
 export function canDelete(user: SessionUser): boolean {
-  if (user.role === 'owner') return true;
+  if (user.role === 'owner' || user.permissions?.superadmin) return true;
   return !!user.permissions?.can_delete;
+}
+
+/** Superadmin: can manage users (create staff, edit staff permissions). Owner always yes. */
+export function isSuperadmin(user: SessionUser): boolean {
+  if (user.role === 'owner') return true;
+  return !!user.permissions?.superadmin;
 }
