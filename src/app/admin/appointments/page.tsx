@@ -3,7 +3,7 @@ import { requireAdmin } from '@/lib/require-admin';
 import AdminAppointmentsClient from '@/components/admin/AdminAppointmentsClient';
 
 export default async function AdminAppointmentsPage() {
-  requireAdmin();
+  await requireAdmin('appointments');
   const supabase = createAdminClient();
   const { data: appointments } = await supabase
     .from('appointments')

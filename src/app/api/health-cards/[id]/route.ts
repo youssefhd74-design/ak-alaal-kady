@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase';
 import { requireAdminApi } from '../../../../lib/require-admin-api';
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
-  const denied = requireAdminApi();
+  const denied = await requireAdminApi('health_cards');
   if (denied) return denied;
   const body = await request.json();
   const db = createAdminClient();
@@ -13,7 +13,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 }
 
 export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
-  const denied = requireAdminApi();
+  const denied = await requireAdminApi('health_cards', true);
   if (denied) return denied;
   const db = createAdminClient();
   const { error } = await db.from('car_cards').delete().eq('id', params.id);

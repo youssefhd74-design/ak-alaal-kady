@@ -4,7 +4,7 @@ import { Package, ShoppingBag, Calendar, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function AdminDashboard() {
-  requireAdmin();
+  await requireAdmin();
   const supabase = createAdminClient();
   const today = new Date().toISOString().split('T')[0];
 

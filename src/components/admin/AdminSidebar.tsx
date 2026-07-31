@@ -1,25 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Package, ShoppingBag, Calendar,
   Settings, LogOut, Wrench, ExternalLink, Search,
-  HeartPulse, Menu, X
+  HeartPulse, Menu, X, Shield
 } from 'lucide-react';
 
-const navItems = [
-  { href: '/admin', label: 'الرئيسية', icon: LayoutDashboard, exact: true },
-  { href: '/admin/products', label: 'المنتجات', icon: Package },
-  { href: '/admin/orders', label: 'الطلبات', icon: ShoppingBag },
-  { href: '/admin/appointments', label: 'المواعيد', icon: Calendar },
-  { href: '/admin/requests', label: 'طلبات المنتجات', icon: Search },
-  { href: '/admin/health-cards', label: 'بطاقات السيارات', icon: HeartPulse },
-  { href: '/admin/settings', label: 'الإعدادات', icon: Settings },
+const NAV = [
+  { href: '/admin', label: 'الرئيسية', icon: LayoutDashboard, exact: true, perm: null },
+  { href: '/admin/products', label: 'المنتجات', icon: Package, perm: 'products' },
+  { href: '/admin/orders', label: 'الطلبات', icon: ShoppingBag, perm: 'orders' },
+  { href: '/admin/appointments', label: 'المواعيد', icon: Calendar, perm: 'appointments' },
+  { href: '/admin/requests', label: 'طلبات المنتجات', icon: Search, perm: 'requests' },
+  { href: '/admin/health-cards', label: 'بطاقات السيارات', icon: HeartPulse, perm: 'health_cards' },
+  { href: '/admin/settings', label: 'الإعدادات', icon: Settings, perm: 'settings' },
 ];
 
-function SidebarContent({ onClose }: { onClose?: () => void }) {
+interface Me {
+  display_name: string;
+  role: 'owner' | 'staff';
+  permissions: Record<string, boolean>;
+}
+
+function SidebarContent({ me, onClose }: { me: Me | null; onClose?: () => void }) {
   const pathname = usePathname();
 
   function isActive(href: string, exact = false) {
@@ -32,6 +38,10 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
     window.location.href = '/admin-login';
   }
 
+  const visibleNav = NAV.filter(item =>
+    !item.perm || me?.role === 'owner' || me?.permissions?.[item.perm]
+  );
+
   return (
     <div className="flex flex-col h-full">
       {/* Logo */}
@@ -42,10 +52,9 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
           </div>
           <div>
             <p className="font-bold text-sm text-white">AK Admin</p>
-            <p className="text-xs text-gray-400">علاء القاضي</p>
+            <p className="text-xs text-gray-400">{me?.display_name || 'علاء القاضي'}</p>
           </div>
         </div>
-        {/* Close button — mobile only */}
         {onClose && (
           <button onClick={onClose} className="text-gray-400 hover:text-white md:hidden">
             <X size={20} />
@@ -56,7 +65,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
       {/* Nav */}
       <nav className="flex-1 p-3 overflow-y-auto">
         <div className="flex flex-col gap-1">
-          {navItems.map(({ href, label, icon: Icon, exact }) => (
+          {visibleNav.map(({ href, label, icon: Icon, exact }) => (
             <Link
               key={href}
               href={href}
@@ -71,6 +80,22 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
               {label}
             </Link>
           ))}
+
+          {/* Owner-only: user management */}
+          {me?.role === 'owner' && (
+            <Link
+              href="/admin/users"
+              onClick={onClose}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors mt-2 border-t border-gray-700 pt-3 ${
+                isActive('/admin/users')
+                  ? 'bg-brand-600 text-white'
+                  : 'text-brand-400 hover:bg-gray-800'
+              }`}
+            >
+              <Shield size={18} />
+              صلاحيات المستخدمين
+            </Link>
+          )}
         </div>
       </nav>
 
@@ -98,10 +123,18 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
 
 export default function AdminSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [me, setMe] = useState<Me | null>(null);
+
+  useEffect(() => {
+    fetch('/api/admin-auth')
+      .then(r => r.ok ? r.json() : null)
+      .then(setMe)
+      .catch(() => setMe(null));
+  }, []);
 
   return (
     <>
-      {/* ── MOBILE TOP BAR ── */}
+      {/* Mobile top bar */}
       <div className="md:hidden fixed top-0 inset-x-0 z-40 bg-gray-900 border-b border-gray-700 flex items-center justify-between px-4 h-14">
         <div className="flex items-center gap-2">
           <div className="bg-brand-600 rounded-lg p-1.5">
@@ -109,32 +142,24 @@ export default function AdminSidebar() {
           </div>
           <span className="font-bold text-sm text-white">AK Admin</span>
         </div>
-        <button
-          onClick={() => setMobileOpen(true)}
-          className="text-gray-300 hover:text-white p-1"
-        >
+        <button onClick={() => setMobileOpen(true)} className="text-gray-300 hover:text-white p-1">
           <Menu size={22} />
         </button>
       </div>
 
-      {/* ── MOBILE DRAWER OVERLAY ── */}
+      {/* Mobile drawer */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/60"
-            onClick={() => setMobileOpen(false)}
-          />
-          {/* Drawer — slides in from right (RTL) */}
+          <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
           <div className="relative ms-auto w-72 bg-gray-900 h-full shadow-2xl flex flex-col">
-            <SidebarContent onClose={() => setMobileOpen(false)} />
+            <SidebarContent me={me} onClose={() => setMobileOpen(false)} />
           </div>
         </div>
       )}
 
-      {/* ── DESKTOP SIDEBAR ── */}
+      {/* Desktop sidebar */}
       <aside className="hidden md:flex w-60 bg-gray-900 text-white flex-col min-h-screen shrink-0">
-        <SidebarContent />
+        <SidebarContent me={me} />
       </aside>
     </>
   );

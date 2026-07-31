@@ -3,7 +3,7 @@ import { requireAdmin } from '@/lib/require-admin';
 import AdminOrdersClient from '@/components/admin/AdminOrdersClient';
 
 export default async function AdminOrdersPage() {
-  requireAdmin();
+  await requireAdmin('orders');
   const supabase = createAdminClient();
   const { data: orders } = await supabase
     .from('orders')

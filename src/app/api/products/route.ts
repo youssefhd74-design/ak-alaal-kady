@@ -13,7 +13,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const denied = requireAdminApi();
+  const denied = await requireAdminApi('products');
   if (denied) return denied;
   const body = await request.json();
   const db = createAdminClient();

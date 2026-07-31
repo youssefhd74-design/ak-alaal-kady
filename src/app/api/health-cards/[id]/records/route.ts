@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase';
 import { requireAdminApi } from '../../../../../lib/require-admin-api';
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
-  const denied = requireAdminApi();
+  const denied = await requireAdminApi('health_cards');
   if (denied) return denied;
   const body = await request.json();
   const db = createAdminClient();
