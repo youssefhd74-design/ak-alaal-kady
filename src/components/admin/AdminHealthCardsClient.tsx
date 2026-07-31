@@ -10,7 +10,7 @@ const emptyCard = { customer_name: '', customer_phone: '', car_model: '', car_mo
 const emptyRecord = {
   service_date: new Date().toISOString().split('T')[0],
   odometer_km: '', services_performed: '', parts_replaced: '',
-  next_service_date: '', next_service_note: '', notes: '',
+  next_service_date: '', next_service_note: '', customer_complaint: '', notes: '',
 };
 
 export default function AdminHealthCardsClient({ initialCards, initialTotal, pageSize }: { initialCards: any[]; initialTotal: number; pageSize: number }) {
@@ -145,6 +145,7 @@ export default function AdminHealthCardsClient({ initialCards, initialTotal, pag
       parts_replaced: rec.parts_replaced || '',
       next_service_date: rec.next_service_date || '',
       next_service_note: rec.next_service_note || '',
+      customer_complaint: rec.customer_complaint || '',
       notes: rec.notes || '',
     });
     setRecordModal(cardId);
@@ -337,8 +338,10 @@ export default function AdminHealthCardsClient({ initialCards, initialTotal, pag
                               </button>
                             </div>
                           </div>
+                          {rec.customer_complaint && <p className="text-sm text-blue-600 mb-1">💬 شكوى العميل: {rec.customer_complaint}</p>}
                           <p className="text-sm text-gray-700 mb-1">🔧 {rec.services_performed}</p>
                           {rec.parts_replaced && <p className="text-sm text-gray-500 mb-1">⚙️ قطع مستبدلة: {rec.parts_replaced}</p>}
+                          {rec.notes && <p className="text-sm text-yellow-700 mb-1 bg-yellow-50 rounded px-2 py-1">🔒 داخلي: {rec.notes}</p>}
                           {rec.next_service_date && (
                             <p className="text-xs text-brand-600 font-medium mt-2">
                               📅 الخدمة القادمة: {new Date(rec.next_service_date).toLocaleDateString('ar-EG')}
@@ -488,6 +491,20 @@ export default function AdminHealthCardsClient({ initialCards, initialTotal, pag
                 <input type="text" className="input-field" placeholder="تغيير زيت بعد 5000 كم"
                   value={recordForm.next_service_note}
                   onChange={e => setRecordForm({ ...recordForm, next_service_note: e.target.value })} />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">شكوى العميل <span className="text-xs text-blue-500">(تظهر للعميل)</span></label>
+                <textarea className="input-field resize-none" rows={2}
+                  placeholder="ما اشتكى منه العميل في هذه الزيارة..."
+                  value={recordForm.customer_complaint}
+                  onChange={e => setRecordForm({ ...recordForm, customer_complaint: e.target.value })} />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">ملاحظة إدارية <span className="text-xs text-yellow-600">(داخلية — لا تظهر للعميل أبداً)</span></label>
+                <textarea className="input-field resize-none bg-yellow-50" rows={2}
+                  placeholder="ملاحظات للفريق فقط..."
+                  value={recordForm.notes}
+                  onChange={e => setRecordForm({ ...recordForm, notes: e.target.value })} />
               </div>
             </div>
             <div className="p-5 pt-0 flex gap-3">

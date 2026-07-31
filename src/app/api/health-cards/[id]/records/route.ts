@@ -15,6 +15,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     parts_replaced: body.parts_replaced || null,
     next_service_date: body.next_service_date || null,
     next_service_note: body.next_service_note || null,
+    customer_complaint: body.customer_complaint || null,
     notes: body.notes || null,
   }).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

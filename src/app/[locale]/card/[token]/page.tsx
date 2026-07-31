@@ -15,7 +15,7 @@ export default async function CarCardPage({
 
   const { data: card } = await db
     .from('car_cards')
-    .select('customer_name, car_model, car_year, plate, created_at, customer_complaint, service_records(id, service_date, odometer_km, services_performed, parts_replaced, next_service_date, next_service_note)')
+    .select('customer_name, car_model, car_year, plate, created_at, customer_complaint, service_records(id, service_date, odometer_km, services_performed, parts_replaced, next_service_date, next_service_note, customer_complaint)')
     .eq('token', token)
     .maybeSingle();
 
@@ -151,6 +151,11 @@ export default async function CarCardPage({
                           </span>
                         )}
                       </div>
+                      {rec.customer_complaint && (
+                        <p className="text-xs text-blue-300 mb-1.5 leading-relaxed">
+                          💬 {isAr ? 'الشكوى: ' : 'Issue: '}{rec.customer_complaint}
+                        </p>
+                      )}
                       <p className="text-sm text-gray-300 leading-relaxed">{rec.services_performed}</p>
                       {rec.parts_replaced && (
                         <p className="text-xs text-gray-400 mt-2 flex items-start gap-1.5">
