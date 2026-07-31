@@ -14,9 +14,20 @@ const STATUSES = [
 export default function AdminAppointmentsClient({ initialAppointments }: { initialAppointments: any[] }) {
   const [appointments, setAppointments] = useState(initialAppointments);
   const [filter, setFilter] = useState('');
+  const [search, setSearch] = useState('');
   const [view, setView] = useState<any>(null);
 
-  const filtered = filter ? appointments.filter((a) => a.status === filter) : appointments;
+  const filtered = appointments.filter((a) => {
+    if (filter && a.status !== filter) return false;
+    if (search) {
+      const s = search.trim().toLowerCase();
+      const name = (a.customer_name || '').toLowerCase();
+      const phone = (a.customer_phone || '').replace(/\D/g, '');
+      const sPhone = s.replace(/\D/g, '');
+      if (!name.includes(s) && !(sPhone && phone.includes(sPhone))) return false;
+    }
+    return true;
+  });
   const statusMap = Object.fromEntries(STATUSES.map((s) => [s.value, s]));
 
   async function updateStatus(id: string, status: string) {
@@ -39,6 +50,13 @@ export default function AdminAppointmentsClient({ initialAppointments }: { initi
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-800">المواعيد</h1>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="ابحث بالاسم أو الهاتف..."
+          className="input-field w-56"
+        />
         <select className="input-field w-40" value={filter} onChange={(e) => setFilter(e.target.value)}>
           <option value="">جميع الحالات</option>
           {STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}

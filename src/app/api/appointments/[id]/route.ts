@@ -7,7 +7,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   if (denied) return denied;
   const body = await request.json();
   const db = createAdminClient();
-  const { data, error } = await db.from('appointments').update(body).eq('id', params.id).select().single();
+  const update: any = {};
+  if (body.status !== undefined) update.status = body.status;
+  const { data, error } = await db.from('appointments').update(update).eq('id', params.id).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }

@@ -303,7 +303,7 @@ export default function ProductsClient({ initialProducts, categories }: Props) {
               </div>
 
               <button onClick={handleOrder} disabled={submitting} className="w-full btn-primary py-3 text-base disabled:opacity-70">
-                {submitting ? t('common.loading') : isAr ? 'تأكيد وإرسال الطلب' : 'Confirm & Submit any'}
+                {submitting ? t('common.loading') : isAr ? 'تأكيد وإرسال الطلب' : 'Confirm & Submit Order'}
               </button>
             </div>
           </div>

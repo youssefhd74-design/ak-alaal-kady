@@ -15,10 +15,21 @@ const STATUSES = [
 export default function AdminOrdersClient({ initialOrders }: { initialOrders: any[] }) {
   const [orders, setOrders] = useState(initialOrders);
   const [filter, setFilter] = useState('');
+  const [search, setSearch] = useState('');
   const [viewOrder, setViewOrder] = useState<any>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const filtered = filter ? orders.filter((o) => o.status === filter) : orders;
+  const filtered = orders.filter((o) => {
+    if (filter && o.status !== filter) return false;
+    if (search) {
+      const s = search.trim().toLowerCase();
+      const name = (o.customer_name || '').toLowerCase();
+      const phone = (o.customer_phone || '').replace(/\D/g, '');
+      const sPhone = s.replace(/\D/g, '');
+      if (!name.includes(s) && !(sPhone && phone.includes(sPhone))) return false;
+    }
+    return true;
+  });
 
   async function updateStatus(id: string, status: string) {
     try {
@@ -55,6 +66,13 @@ export default function AdminOrdersClient({ initialOrders }: { initialOrders: an
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-800">الطلبات</h1>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="ابحث بالاسم أو الهاتف..."
+          className="input-field w-56"
+        />
         <select className="input-field w-40" value={filter} onChange={(e) => setFilter(e.target.value)}>
           <option value="">جميع الحالات</option>
           {STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}

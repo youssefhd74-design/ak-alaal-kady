@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus, X, Check, Car, Link2, MessageCircle, FileText, Trash2, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, X, Check, Car, Link2, MessageCircle, FileText, Trash2, ChevronDown, ChevronUp, Pencil, Search, ChevronRight, ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { toWhatsAppNumber } from '@/lib/phone';
 
@@ -13,8 +13,41 @@ const emptyRecord = {
   next_service_date: '', next_service_note: '', notes: '',
 };
 
-export default function AdminHealthCardsClient({ initialCards }: { initialCards: any[] }) {
+export default function AdminHealthCardsClient({ initialCards, initialTotal, pageSize }: { initialCards: any[]; initialTotal: number; pageSize: number }) {
   const [cards, setCards] = useState(initialCards);
+  const [total, setTotal] = useState(initialTotal);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  async function fetchCards(q: string, p: number) {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/health-cards?q=${encodeURIComponent(q)}&page=${p}&limit=${pageSize}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error();
+      setCards(data.cards);
+      setTotal(data.total);
+      setPage(p);
+    } catch {
+      toast.error('فشل تحميل البطاقات');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Debounced server-side search
+  useEffect(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      fetchCards(search, 1);
+    }, 350);
+    return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const [cardModal, setCardModal] = useState(false);
   const [editingCard, setEditingCard] = useState<any>(null);
   const [recordModal, setRecordModal] = useState<string | null>(null);
@@ -191,11 +224,24 @@ export default function AdminHealthCardsClient({ initialCards }: { initialCards:
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">بطاقات صحة السيارات</h1>
-          <p className="text-sm text-gray-400 mt-0.5">{cards.length} بطاقة · سجل صيانة دائم لكل عميل</p>
+          <p className="text-sm text-gray-400 mt-0.5">{total.toLocaleString()} بطاقة · سجل صيانة دائم لكل عميل</p>
         </div>
         <button onClick={openNewCard} className="btn-primary flex items-center gap-2">
           <Plus size={18} /> بطاقة جديدة
         </button>
+      </div>
+
+      {/* Search */}
+      <div className="relative mb-5 max-w-md">
+        <Search size={16} className="absolute start-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="ابحث بالاسم، الهاتف، اللوحة، أو الموديل..."
+          className="input-field ps-10 w-full"
+        />
+        {loading && <span className="absolute end-3.5 top-1/2 -translate-y-1/2 text-xs text-gray-400">...</span>}
       </div>
 
       <div className="flex flex-col gap-3">
@@ -291,10 +337,33 @@ export default function AdminHealthCardsClient({ initialCards }: { initialCards:
         {cards.length === 0 && (
           <div className="card p-12 text-center text-gray-400">
             <Car size={36} className="mx-auto mb-3 opacity-30" />
-            <p className="font-medium">لا توجد بطاقات بعد</p>
+            <p className="font-medium">{search ? 'لا توجد نتائج لبحثك' : 'لا توجد بطاقات بعد'}</p>
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-6">
+          <button
+            onClick={() => fetchCards(search, page - 1)}
+            disabled={page <= 1 || loading}
+            className="p-2 rounded-lg border border-gray-200 text-gray-500 disabled:opacity-40 hover:bg-gray-50"
+          >
+            <ChevronRight size={16} />
+          </button>
+          <span className="text-sm text-gray-500">
+            صفحة {page} من {totalPages}
+          </span>
+          <button
+            onClick={() => fetchCards(search, page + 1)}
+            disabled={page >= totalPages || loading}
+            className="p-2 rounded-lg border border-gray-200 text-gray-500 disabled:opacity-40 hover:bg-gray-50"
+          >
+            <ChevronLeft size={16} />
+          </button>
+        </div>
+      )}
 
       {/* CARD MODAL */}
       {cardModal && (
