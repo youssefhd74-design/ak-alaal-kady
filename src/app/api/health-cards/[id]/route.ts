@@ -9,7 +9,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   const db = createAdminClient();
   // Whitelist: only these fields can ever be updated (protects token/id)
   const update: any = {};
-  for (const k of ['customer_name', 'customer_phone', 'car_model', 'car_year', 'plate']) {
+  for (const k of ['customer_name', 'customer_phone', 'car_model', 'car_year', 'plate', 'customer_complaint', 'admin_note']) {
     if (body[k] !== undefined) update[k] = body[k];
   }
   const { data, error } = await db.from('car_cards').update(update).eq('id', params.id).select().single();

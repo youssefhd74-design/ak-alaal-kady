@@ -15,7 +15,7 @@ export default async function CarCardPage({
 
   const { data: card } = await db
     .from('car_cards')
-    .select('customer_name, car_model, car_year, plate, created_at, service_records(*)')
+    .select('customer_name, car_model, car_year, plate, created_at, customer_complaint, service_records(id, service_date, odometer_km, services_performed, parts_replaced, next_service_date, next_service_note)')
     .eq('token', token)
     .maybeSingle();
 
@@ -66,6 +66,19 @@ export default async function CarCardPage({
               </div>
             </div>
           </div>
+
+          {/* Customer complaint */}
+          {(card as any).customer_complaint && (
+            <div className="rounded-2xl p-5 mb-5"
+              style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.25)' }}>
+              <p className="text-xs text-blue-300 font-bold uppercase tracking-wider mb-1.5">
+                {isAr ? 'الشكوى المسجلة' : 'Reported Issue'}
+              </p>
+              <p className="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap">
+                {(card as any).customer_complaint}
+              </p>
+            </div>
+          )}
 
           {/* Next service banner */}
           {nextDue && (

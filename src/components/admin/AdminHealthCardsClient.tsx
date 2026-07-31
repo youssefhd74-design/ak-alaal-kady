@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { toWhatsAppNumber } from '@/lib/phone';
 
 const CAR_MODELS = ['Clio','Logan','Duster','Symbol','Megane','Sandero','Fluence','Koleos','Kadjar','Captur','Talisman','Other'];
-const emptyCard = { customer_name: '', customer_phone: '', car_model: '', car_model_other: '', car_year: '', plate: '' };
+const emptyCard = { customer_name: '', customer_phone: '', car_model: '', car_model_other: '', car_year: '', plate: '', customer_complaint: '', admin_note: '' };
 const emptyRecord = {
   service_date: new Date().toISOString().split('T')[0],
   odometer_km: '', services_performed: '', parts_replaced: '',
@@ -78,6 +78,8 @@ export default function AdminHealthCardsClient({ initialCards, initialTotal, pag
       car_model_other: isKnownModel ? '' : card.car_model,
       car_year: card.car_year || '',
       plate: card.plate || '',
+      customer_complaint: card.customer_complaint || '',
+      admin_note: card.admin_note || '',
     });
     setCardModal(true);
   }
@@ -99,6 +101,8 @@ export default function AdminHealthCardsClient({ initialCards, initialTotal, pag
         car_model: cardForm.car_model === 'Other' ? cardForm.car_model_other : cardForm.car_model,
         car_year: cardForm.car_year || null,
         plate: cardForm.plate || null,
+        customer_complaint: cardForm.customer_complaint || null,
+        admin_note: cardForm.admin_note || null,
       };
       if (editingCard) {
         const res = await fetch(`/api/health-cards/${editingCard.id}`, {
@@ -289,6 +293,22 @@ export default function AdminHealthCardsClient({ initialCards, initialTotal, pag
                     </button>
                   </div>
 
+                  {(card.customer_complaint || card.admin_note) && (
+                    <div className="flex flex-col gap-2 mb-4">
+                      {card.customer_complaint && (
+                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-sm">
+                          <p className="text-xs text-blue-500 font-bold mb-1">شكوى العميل (عامة)</p>
+                          <p className="text-gray-700 whitespace-pre-wrap">{card.customer_complaint}</p>
+                        </div>
+                      )}
+                      {card.admin_note && (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-sm">
+                          <p className="text-xs text-yellow-600 font-bold mb-1">🔒 ملاحظة إدارية (داخلية فقط)</p>
+                          <p className="text-gray-700 whitespace-pre-wrap">{card.admin_note}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {sorted.length === 0 ? (
                     <p className="text-center text-gray-400 text-sm py-6">
                       <FileText size={24} className="mx-auto mb-2 opacity-30" />
@@ -402,6 +422,20 @@ export default function AdminHealthCardsClient({ initialCards, initialTotal, pag
                     onChange={e => setCardForm({ ...cardForm, car_model_other: e.target.value })} />
                 </div>
               )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">شكوى العميل <span className="text-xs text-blue-500">(تظهر للعميل)</span></label>
+                <textarea className="input-field resize-none" rows={3}
+                  placeholder="صف المشكلة التي اشتكى منها العميل..."
+                  value={cardForm.customer_complaint}
+                  onChange={e => setCardForm({ ...cardForm, customer_complaint: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">ملاحظة إدارية <span className="text-xs text-yellow-600">(داخلية — لا تظهر للعميل أبداً)</span></label>
+                <textarea className="input-field resize-none bg-yellow-50" rows={3}
+                  placeholder="ملاحظات للفريق فقط..."
+                  value={cardForm.admin_note}
+                  onChange={e => setCardForm({ ...cardForm, admin_note: e.target.value })} />
+              </div>
             </div>
             <div className="p-5 pt-0 flex gap-3">
               <button onClick={() => setCardModal(false)} className="btn-secondary flex-1">إلغاء</button>
